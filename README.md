@@ -52,3 +52,25 @@ Hourly cron: `php artisan schedule:run` (or system cron `* * * * * php /path/to/
 ## Core rule
 
 **Lock key** = `project_id` + `customer_mobile`. Lock is created only when a **visit is confirmed** (OTP or manual). Same mobile + same project + active lock → lead registration blocked; CP name hidden, expiry date shown.
+
+---
+
+## Deploy (clone from GitHub)
+
+Repo: **https://github.com/EDITORXX/Builder-Reg**
+
+```bash
+git clone https://github.com/EDITORXX/Builder-Reg.git
+cd Builder-Reg
+composer install --optimize-autoloader --no-dev
+cp .env.example .env
+php artisan key:generate
+# Edit .env: APP_URL, DB_*, QUEUE_CONNECTION, etc.
+php artisan migrate --force
+php artisan db:seed --force
+php artisan storage:link
+# Point web server doc root to /public
+# Optional: set cron * * * * * php /path/to/artisan schedule:run
+```
+
+**Production:** Set `APP_ENV=production`, `APP_DEBUG=false`, and use MySQL/PostgreSQL. For queue (notifications): `QUEUE_CONNECTION=database` or Redis and run `php artisan queue:work`.
