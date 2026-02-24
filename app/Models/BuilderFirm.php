@@ -20,6 +20,8 @@ class BuilderFirm extends Model
         'settings',
         'is_active',
         'plan_id',
+        'scheduled_visit_enabled',
+        'scheduled_visit_limit',
     ];
 
     protected function casts(): array
@@ -27,6 +29,7 @@ class BuilderFirm extends Model
         return [
             'settings' => 'array',
             'is_active' => 'boolean',
+            'scheduled_visit_enabled' => 'boolean',
         ];
     }
 
@@ -53,6 +56,11 @@ class BuilderFirm extends Model
     public function forms(): HasMany
     {
         return $this->hasMany(Form::class, 'builder_firm_id');
+    }
+
+    public function visitSchedules(): HasMany
+    {
+        return $this->hasMany(VisitSchedule::class, 'builder_firm_id');
     }
 
     public function plan(): BelongsTo

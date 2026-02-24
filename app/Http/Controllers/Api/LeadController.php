@@ -86,7 +86,7 @@ class LeadController extends Controller
             'mobile' => 'required|string|max:20',
             'email' => 'nullable|email|max:255',
             'city' => 'nullable|string|max:100',
-            'budget' => 'nullable|numeric|min:0',
+            'budget' => 'nullable|string|max:100',
             'property_type' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:2000',
             'source' => 'nullable|in:channel_partner,direct,online,referral',

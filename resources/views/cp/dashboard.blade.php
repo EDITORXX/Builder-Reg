@@ -18,6 +18,8 @@
             </div>
             <p style="margin: 1rem 0 0; font-size: 0.875rem;">
                 <a href="{{ route('cp.leads') }}">View my leads</a> ·
+                <a href="{{ route('cp.scheduled-visits.index') }}">Scheduled visits</a> ·
+                <a href="{{ route('cp.direct-visit') }}">Register direct visit</a> ·
                 <a href="{{ route('cp.my-applications') }}">My applications</a>
             </p>
         </div>

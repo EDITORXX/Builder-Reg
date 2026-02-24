@@ -123,4 +123,6 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    'system_actions_enabled' => env('SYSTEM_ACTIONS_ENABLED', true),
+
 ];

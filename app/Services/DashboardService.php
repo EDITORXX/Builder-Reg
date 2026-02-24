@@ -34,7 +34,9 @@ class DashboardService
      *   conversion: array{visit_done_count: int, booked_count: int, conversion_rate_percent: float},
      *   active_locks_count: int,
      *   recent_leads: \Illuminate\Database\Eloquent\Collection,
-     *   cp_applications_pending_count: int
+     *   cp_applications_pending_count: int,
+     *   cp_applications_approved_count: int,
+     *   cp_applications_rejected_count: int
      * }
      */
     public function getTenantDashboardStats(BuilderFirm $builder): array
@@ -67,9 +69,15 @@ class DashboardService
             ->limit(10)
             ->get();
 
-        $cpPendingCount = $builder->cpApplications()
-            ->where('status', CpApplication::STATUS_PENDING)
-            ->count();
+        $cpCountsByStatus = $builder->cpApplications()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->get()
+            ->keyBy('status');
+
+        $cpPendingCount = (int) ($cpCountsByStatus->get(CpApplication::STATUS_PENDING)?->total ?? 0);
+        $cpApprovedCount = (int) ($cpCountsByStatus->get(CpApplication::STATUS_APPROVED)?->total ?? 0);
+        $cpRejectedCount = (int) ($cpCountsByStatus->get(CpApplication::STATUS_REJECTED)?->total ?? 0);
 
         return [
             'plan_limits' => [
@@ -95,6 +103,8 @@ class DashboardService
             'active_locks_count' => $activeLocksCount,
             'recent_leads' => $recentLeads,
             'cp_applications_pending_count' => $cpPendingCount,
+            'cp_applications_approved_count' => $cpApprovedCount,
+            'cp_applications_rejected_count' => $cpRejectedCount,
         ];
     }
 }

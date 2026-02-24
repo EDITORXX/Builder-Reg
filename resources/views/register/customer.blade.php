@@ -19,6 +19,12 @@
                 <h1 class="login-title">Customer Registration</h1>
                 <p class="login-subtitle">Register your visit. Select project and channel partner, then fill your details.</p>
 
+                @if(!empty($scheduled_visit_enabled))
+                    <p style="margin: 0 0 1rem 0; padding: 0.75rem 1rem; background: var(--bg-page); border: 1px solid var(--border); border-radius: var(--radius); font-size: 0.9375rem;">
+                        Have a scheduled visit? <a href="{{ route('register.customer.scan', $builder->slug) }}" style="font-weight: 600;">Scan QR to check-in</a>
+                    </p>
+                @endif
+
                 @if(session('success'))
                     <p class="msg-success">{{ session('success') }}</p>
                 @endif

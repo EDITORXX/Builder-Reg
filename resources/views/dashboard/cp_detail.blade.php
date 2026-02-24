@@ -23,6 +23,29 @@
         <span>{{ $cpName }}</span>
     </div>
 
+    @if(session('success'))
+        <div class="card" style="margin-bottom: 1rem; border-color: var(--success); background: #f0fdf4;">
+            <div class="card-body">{{ session('success') }}</div>
+        </div>
+    @endif
+    @if(session('error'))
+        <div class="card" style="margin-bottom: 1rem; border-color: var(--error); background: #fef2f2;">
+            <div class="card-body">{{ session('error') }}</div>
+        </div>
+    @endif
+    @if(session('show_cp_password') && session('cp_password_value'))
+        <div class="card password-reveal-card" style="margin-bottom: 1rem; border-color: var(--accent); background: #eff6ff;">
+            <div class="card-body">
+                <p style="margin: 0 0 0.5rem 0; font-weight: 600;">New password (copy now — won’t be shown again)</p>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: var(--text-secondary);">{{ session('cp_password_name') }} — {{ session('cp_password_email') }}</p>
+                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                    <code id="new-cp-password-value" style="padding: 0.5rem 0.75rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem;">{{ session('cp_password_value') }}</code>
+                    <button type="button" onclick="copyNewCpPassword()" class="btn-primary" style="cursor: pointer;">Copy</button>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-header">
             <h2 class="card-title">Details</h2>
@@ -34,6 +57,19 @@
                 <dd style="margin: 0;">{{ $channelPartner->user?->name ?? '—' }}</dd>
                 <dt style="font-weight: 600;">Email</dt>
                 <dd style="margin: 0;">{{ $channelPartner->user?->email ?? '—' }}</dd>
+                @if($user->isSuperAdmin() || $user->isBuilderAdmin())
+                <dt style="font-weight: 600;">Password</dt>
+                <dd style="margin: 0;">
+                    @if($channelPartner->user)
+                        <form method="POST" action="{{ route('tenant.channel-partners.reset-password', [$tenant->slug, $channelPartner]) }}" style="display: inline;" onsubmit="return confirm('Generate a new password for this channel partner? Their current password will stop working. You will see the new password once.');">
+                            @csrf
+                            <button type="submit" class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">Reset password</button>
+                        </form>
+                    @else
+                        —
+                    @endif
+                </dd>
+                @endif
                 <dt style="font-weight: 600;">Firm</dt>
                 <dd style="margin: 0;">{{ $channelPartner->firm_name ?? '—' }}</dd>
                 <dt style="font-weight: 600;">RERA number</dt>
@@ -82,8 +118,20 @@
         <div class="card-body">
             <div class="stat-grid" style="margin-bottom: 0;">
                 <div class="stat-card">
-                    <div class="stat-label">Site visits (visit done)</div>
-                    <div class="stat-value" style="font-size: 1.25rem;">{{ $visit_done_count }}</div>
+                    <div class="stat-label">Leads</div>
+                    <div class="stat-value" style="font-size: 1.25rem;">{{ $leads_count ?? 0 }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Visits</div>
+                    <div class="stat-value" style="font-size: 1.25rem;">{{ $visit_done_count ?? 0 }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Meetings</div>
+                    <div class="stat-value" style="font-size: 1.25rem;">{{ $meetings_count ?? 0 }}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">QR generated</div>
+                    <div class="stat-value" style="font-size: 1.25rem;">{{ $qr_generated_count ?? 0 }}</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-label">Rank</div>
@@ -132,4 +180,16 @@
             @endif
         </div>
     </div>
+    @if(session('show_cp_password') && session('cp_password_value'))
+    <script>
+        function copyNewCpPassword() {
+            var el = document.getElementById('new-cp-password-value');
+            if (!el) return;
+            navigator.clipboard.writeText(el.textContent).then(function() {
+                var btn = document.querySelector('.password-reveal-card button');
+                if (btn) { btn.textContent = 'Copied!'; setTimeout(function() { btn.textContent = 'Copy'; }, 1500); }
+            });
+        }
+    </script>
+    @endif
 @endsection

@@ -153,7 +153,17 @@ class PublicRegistrationController extends Controller
             'fields' => $fields,
             'projects' => $projects,
             'verifiedCps' => $verifiedCps,
+            'scheduled_visit_enabled' => (bool) ($builder->scheduled_visit_enabled ?? false),
         ]);
+    }
+
+    public function showCustomerScan(string $builder_slug): View|\Illuminate\Http\Response
+    {
+        $builder = BuilderFirm::where('slug', $builder_slug)->where('is_active', true)->firstOrFail();
+        if (! ($builder->scheduled_visit_enabled ?? false)) {
+            abort(404);
+        }
+        return view('register.customer_scan', ['builder' => $builder]);
     }
 
     public function submitCustomerForm(Request $request, string $builder_slug): RedirectResponse
@@ -172,7 +182,7 @@ class PublicRegistrationController extends Controller
             'mobile' => 'required|string|max:20',
         ];
         foreach ($fields as $field) {
-            if (in_array($field->key, ['project_id', 'cp_id', 'name', 'mobile'], true)) {
+            if (in_array($field->key, ['project_id', 'cp_id', 'name', 'mobile', 'budget_currency'], true)) {
                 continue;
             }
             $key = $field->key;

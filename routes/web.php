@@ -6,8 +6,12 @@ use App\Http\Controllers\Web\FormController;
 use App\Http\Controllers\Web\InstallController;
 use App\Http\Controllers\Web\PlanController;
 use App\Http\Controllers\Web\PublicRegistrationController;
+use App\Http\Controllers\Web\SystemController;
 use App\Http\Controllers\Web\TenantController;
+use App\Http\Controllers\Web\VisitCheckinController;
 use App\Http\Controllers\Web\VisitController;
+use App\Http\Controllers\Web\VisitVerificationController;
+use App\Http\Controllers\Web\CpVisitScheduleController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -24,6 +28,13 @@ Route::get('/register/cp/{builder_slug}', [PublicRegistrationController::class, 
 Route::post('/register/cp/{builder_slug}', [PublicRegistrationController::class, 'submitCpForm']);
 Route::get('/register/customer/{builder_slug}', [PublicRegistrationController::class, 'showCustomerForm'])->name('register.customer');
 Route::post('/register/customer/{builder_slug}', [PublicRegistrationController::class, 'submitCustomerForm']);
+Route::get('/register/customer/{builder_slug}/scan', [PublicRegistrationController::class, 'showCustomerScan'])->name('register.customer.scan');
+
+Route::get('/visit/checkin/thanks', function () {
+    return view('visit.checkin-thanks');
+})->name('visit.checkin.thanks');
+Route::get('/visit/checkin/{token}', [VisitCheckinController::class, 'show'])->name('visit.checkin');
+Route::post('/visit/checkin/{token}', [VisitCheckinController::class, 'submit'])->name('visit.checkin.submit');
 
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login']);
@@ -54,6 +65,16 @@ Route::middleware('auth_web')->group(function () {
     Route::get('/cp/my-applications', function () {
         return redirect()->route('cp.dashboard');
     })->name('cp.my-applications');
+    Route::get('/cp/scheduled-visits', [CpVisitScheduleController::class, 'index'])->name('cp.scheduled-visits.index');
+    Route::get('/cp/scheduled-visits/create', [CpVisitScheduleController::class, 'create'])->name('cp.scheduled-visits.create');
+    Route::post('/cp/scheduled-visits', [CpVisitScheduleController::class, 'store'])->name('cp.scheduled-visits.store');
+    Route::get('/cp/scheduled-visits/{visitSchedule}', [CpVisitScheduleController::class, 'show'])->name('cp.scheduled-visits.show');
+    Route::get('/cp/direct-visit', [CpVisitScheduleController::class, 'directVisitForm'])->name('cp.direct-visit');
+    Route::post('/cp/direct-visit', [CpVisitScheduleController::class, 'directVisitSubmit'])->name('cp.direct-visit.submit');
+
+    Route::get('/t/{slug}/visit-verifications', [TenantController::class, 'showSection'])->defaults('section', 'visit-verifications')->name('tenant.visit-verifications.index');
+    Route::post('/t/{slug}/visit-verifications/{lead}/approve', [VisitVerificationController::class, 'approve'])->name('tenant.visit-verifications.approve');
+    Route::post('/t/{slug}/visit-verifications/{lead}/reject', [VisitVerificationController::class, 'reject'])->name('tenant.visit-verifications.reject');
 
     Route::middleware('role_web:super_admin')->group(function () {
         Route::get('/tenants', [TenantController::class, 'index'])->name('tenants.index');
@@ -64,6 +85,9 @@ Route::middleware('auth_web')->group(function () {
         Route::post('/tenants/{tenant}/reset-admin-password', [TenantController::class, 'resetAdminPassword'])->name('tenants.reset-password');
 
         Route::get('/plans', [PlanController::class, 'index'])->name('plans.index');
+
+        Route::post('/system/git-push', [SystemController::class, 'gitPush'])->name('system.git-push');
+        Route::post('/system/migrate', [SystemController::class, 'migrate'])->name('system.migrate');
     });
 
     Route::get('/t/{slug}/settings', [TenantController::class, 'showSection'])->defaults('section', 'settings')->name('tenant.settings');
@@ -76,6 +100,7 @@ Route::middleware('auth_web')->group(function () {
     Route::get('/t/{slug}/leads', [TenantController::class, 'showSection'])->defaults('section', 'leads')->name('tenant.leads.index');
     Route::get('/t/{slug}/cp-applications', [TenantController::class, 'showSection'])->defaults('section', 'cp-applications')->name('tenant.cp-applications.index');
     Route::get('/t/{slug}/channel-partners/{channelPartner}', [TenantController::class, 'channelPartnerShow'])->name('tenant.channel-partners.show');
+    Route::post('/t/{slug}/channel-partners/{channelPartner}/reset-password', [TenantController::class, 'resetCpPassword'])->name('tenant.channel-partners.reset-password');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/approve', [TenantController::class, 'cpApplicationApprove'])->name('tenant.cp-applications.approve');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/reject', [TenantController::class, 'cpApplicationReject'])->name('tenant.cp-applications.reject');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/assign-manager', [TenantController::class, 'cpApplicationAssignManager'])->name('tenant.cp-applications.assign-manager');

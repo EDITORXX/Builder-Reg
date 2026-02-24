@@ -181,6 +181,38 @@ class LockService
         });
     }
 
+    /**
+     * Create lock for a lead (e.g. after manager approves visit verification).
+     */
+    public function createLockForLead(Lead $lead): LeadLock
+    {
+        $lead->load(['project', 'customer']);
+        $project = $lead->project;
+        $customerMobile = Customer::normalizeMobile($lead->customer->mobile);
+        $lockDays = $project->getLockDays();
+
+        return DB::transaction(function () use ($lead, $project, $customerMobile, $lockDays) {
+            $existing = LeadLock::active()
+                ->where('project_id', $project->id)
+                ->where('customer_mobile', $customerMobile)
+                ->lockForUpdate()
+                ->first();
+            if ($existing) {
+                throw new \RuntimeException('Active lock already exists for this project and customer.');
+            }
+
+            return LeadLock::create([
+                'project_id' => $project->id,
+                'customer_mobile' => $customerMobile,
+                'lead_id' => $lead->id,
+                'channel_partner_id' => $lead->channel_partner_id,
+                'start_at' => now(),
+                'end_at' => now()->addDays($lockDays),
+                'status' => LeadLock::STATUS_ACTIVE,
+            ]);
+        });
+    }
+
     public function forceUnlock(LeadLock $lock, int $userId, string $reason): void
     {
         $lock->update([

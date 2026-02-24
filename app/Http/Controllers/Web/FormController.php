@@ -67,10 +67,13 @@ class FormController extends Controller
             abort(404);
         }
         $form->load('formFields');
+        $editFieldId = request('edit_field');
+        $editField = $editFieldId ? $form->formFields->firstWhere('id', (int) $editFieldId) : null;
         return view('dashboard.form-edit', [
             'user' => session('user'),
             'tenant' => $builder,
             'form' => $form,
+            'editField' => $editField,
         ]);
     }
 
@@ -254,8 +257,7 @@ class FormController extends Controller
                     ['label' => 'Current city', 'key' => 'city', 'type' => 'text', 'required' => false],
                     ['label' => 'Visit date', 'key' => 'visit_date', 'type' => 'date', 'required' => false],
                     ['label' => 'Preferred size', 'key' => 'preferred_size', 'type' => 'text', 'required' => false],
-                    ['label' => 'Budget', 'key' => 'budget', 'type' => 'number', 'required' => false],
-                    ['label' => 'Budget currency', 'key' => 'budget_currency', 'type' => 'text', 'required' => false],
+                    ['label' => 'Budget (₹)', 'key' => 'budget', 'type' => 'dropdown', 'required' => false, 'options' => ['Under 50 Lac', 'Under 1 Cr', 'Under 2 Cr', 'Under 3 Cr']],
                     ['label' => 'Purpose', 'key' => 'purpose', 'type' => 'text', 'required' => false],
                     ['label' => 'Remark', 'key' => 'notes', 'type' => 'textarea', 'required' => false],
                     ['label' => 'Image', 'key' => 'image', 'type' => 'file', 'required' => false],

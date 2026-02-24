@@ -19,6 +19,9 @@ class Lead extends Model
     public const STATUS_NEGOTIATION = 'negotiation';
     public const STATUS_BOOKED = 'booked';
     public const STATUS_LOST = 'lost';
+    public const STATUS_PENDING_VERIFICATION = 'pending_verification';
+    public const STATUS_VERIFIED_VISIT = 'verified_visit';
+    public const STATUS_REJECTED = 'rejected';
 
     public const SOURCE_CHANNEL_PARTNER = 'channel_partner';
     public const SOURCE_DIRECT = 'direct';
@@ -37,13 +40,13 @@ class Lead extends Model
         'budget',
         'property_type',
         'notes',
+        'visit_photo_path',
+        'verification_reject_reason',
     ];
 
     protected function casts(): array
     {
-        return [
-            'budget' => 'decimal:2',
-        ];
+        return [];
     }
 
     public function project(): BelongsTo

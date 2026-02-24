@@ -11,6 +11,7 @@
         'forms' => 'Forms',
         'locks' => 'Locks',
         'visits' => 'Visits',
+        'visit-verifications' => 'Pending Visit Verifications',
         'reports' => 'Reports',
         'profile' => 'Profile',
     ];
@@ -79,39 +80,31 @@
                 <a href="{{ route('tenants.index') }}">Tenants</a> ·
                 <a href="{{ route('plans.index') }}">Plans</a>
             </p>
+            @if(config('app.system_actions_enabled', true))
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; font-weight: 600;">System</p>
+                <form method="POST" action="{{ route('system.git-push') }}" style="display: inline-block; margin-right: 0.5rem;" onsubmit="return confirm('Push current code to Git?');">
+                    @csrf
+                    <button type="submit" class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.875rem;">Push to Git</button>
+                </form>
+                <form method="POST" action="{{ route('system.migrate') }}" style="display: inline-block;" onsubmit="return confirm('Run database migrations?');">
+                    @csrf
+                    <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); cursor: pointer;">Run migrations</button>
+                </form>
+            </div>
+            @endif
         </div>
     </div>
     @endif
 
     @if(isset($tenant) && $tenant && isset($stats))
-    {{-- Builder / Tenant: plan limits, usage, leads, conversion --}}
+    {{-- Builder / Tenant: leads, conversion --}}
     <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-header">
             <h2 class="card-title">{{ $tenant->name }}</h2>
-            <p class="card-subtitle" style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">{{ $tenant->plan?->name ?? '—' }}</p>
         </div>
         <div class="card-body">
-            <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0;">Plan usage</h3>
-            <div class="stat-grid" style="margin-bottom: 1rem;">
-                <div class="stat-card">
-                    <div class="stat-label">Users</div>
-                    <div class="stat-value" style="font-size:1.125rem;">{{ $stats['usage']['users_count'] ?? 0 }} / {{ $stats['plan_limits']['max_users'] ?? 0 }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Projects</div>
-                    <div class="stat-value" style="font-size:1.125rem;">{{ $stats['usage']['projects_count'] ?? 0 }} / {{ $stats['plan_limits']['max_projects'] ?? 0 }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Channel partners</div>
-                    <div class="stat-value" style="font-size:1.125rem;">{{ $stats['usage']['channel_partners_count'] ?? 0 }} / {{ $stats['plan_limits']['max_channel_partners'] ?? 0 }}</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-label">Leads</div>
-                    <div class="stat-value" style="font-size:1.125rem;">{{ $stats['usage']['leads_count'] ?? 0 }} / {{ $stats['plan_limits']['max_leads'] ?? 0 }}</div>
-                </div>
-            </div>
-
-            <h3 style="font-size: 1rem; margin: 1rem 0 0.75rem 0;">Leads by status</h3>
+            <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0;">Leads by status</h3>
             <div class="stat-grid" style="margin-bottom: 1rem;">
                 @php
                     $statusLabels = [

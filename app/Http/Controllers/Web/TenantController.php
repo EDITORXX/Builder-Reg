@@ -14,6 +14,7 @@ use App\Models\Plan;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitSchedule;
 use App\Notifications\CpApplicationApprovedNotification;
 use App\Notifications\CpApplicationRejectedNotification;
 use App\Services\DashboardService;
@@ -136,7 +137,14 @@ class TenantController extends Controller
             return $redirect;
         }
         $plans = Plan::where('is_active', true)->orderBy('max_users')->get();
-        return view('tenants.edit', ['tenant' => $tenant, 'plans' => $plans]);
+        $scheduledVisitUsed = VisitSchedule::where('builder_firm_id', $tenant->id)
+            ->whereIn('status', [VisitSchedule::STATUS_SCHEDULED, VisitSchedule::STATUS_CHECKED_IN])
+            ->count();
+        return view('tenants.edit', [
+            'tenant' => $tenant,
+            'plans' => $plans,
+            'scheduled_visit_used' => $scheduledVisitUsed,
+        ]);
     }
 
     public function update(Request $request, BuilderFirm $tenant): RedirectResponse
@@ -147,8 +155,14 @@ class TenantController extends Controller
         }
         $validated = $request->validate([
             'plan_id' => 'required|exists:plans,id',
+            'scheduled_visit_enabled' => 'nullable|boolean',
+            'scheduled_visit_limit' => 'nullable|integer|min:0',
         ]);
-        $tenant->update(['plan_id' => $validated['plan_id']]);
+        $tenant->update([
+            'plan_id' => $validated['plan_id'],
+            'scheduled_visit_enabled' => $request->boolean('scheduled_visit_enabled'),
+            'scheduled_visit_limit' => $request->filled('scheduled_visit_limit') ? (int) $request->scheduled_visit_limit : null,
+        ]);
         return redirect()->route('tenants.index')->with('success', 'Plan updated for ' . $tenant->name);
     }
 
@@ -259,6 +273,16 @@ class TenantController extends Controller
             $data['reportsLocks'] = $reportService->locksReport($builderFirmId, $filters);
             $data['reportsCpPerformance'] = $reportService->cpPerformanceReport($builderFirmId, $filters);
             $data['reportsConversion'] = $reportService->conversionReport($builderFirmId, $filters);
+        }
+        if ($section === 'visit-verifications') {
+            $data['pendingLeads'] = Lead::with(['project', 'customer', 'channelPartner.user'])
+                ->where('status', Lead::STATUS_PENDING_VERIFICATION)
+                ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
+                ->orderByDesc('created_at')
+                ->paginate(20);
+            $data['visitSchedulesByLeadId'] = VisitSchedule::whereIn('lead_id', $data['pendingLeads']->pluck('id'))
+                ->get()
+                ->keyBy('lead_id');
         }
 
         return view('dashboard', $data);
@@ -422,6 +446,16 @@ class TenantController extends Controller
         $visitDoneCount = $rankRow ? $rankRow->visit_done_count : 0;
         $rank = $rankRow ? $rankRow->rank : null;
 
+        $leadsCount = Lead::where('channel_partner_id', $channelPartner->id)
+            ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
+            ->count();
+        $meetingsCount = Visit::whereHas('lead', fn ($q) => $q->where('channel_partner_id', $channelPartner->id)
+            ->whereHas('project', fn ($q2) => $q2->where('builder_firm_id', $builder->id)))
+            ->count();
+        $qrGeneratedCount = VisitSchedule::where('channel_partner_id', $channelPartner->id)
+            ->where('builder_firm_id', $builder->id)
+            ->count();
+
         $managers = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
         return view('dashboard.cp_detail', [
             'user' => $user,
@@ -431,8 +465,43 @@ class TenantController extends Controller
             'leads' => $leads,
             'visit_done_count' => $visitDoneCount,
             'rank' => $rank,
+            'leads_count' => $leadsCount,
+            'meetings_count' => $meetingsCount,
+            'qr_generated_count' => $qrGeneratedCount,
             'managers' => $managers,
         ]);
+    }
+
+    public function resetCpPassword(string $slug, ChannelPartner $channelPartner): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403, 'You do not have access to this tenant.');
+        }
+        $cpApplication = CpApplication::where('builder_firm_id', $builder->id)
+            ->where('channel_partner_id', $channelPartner->id)
+            ->first();
+        if (! $cpApplication) {
+            abort(404, 'This channel partner has no application with this builder.');
+        }
+        $cpUser = $channelPartner->user;
+        if (! $cpUser) {
+            return redirect()->route('tenant.channel-partners.show', [$slug, $channelPartner])
+                ->with('error', 'No user account found for this channel partner.');
+        }
+        $newPassword = Str::random(12);
+        $cpUser->update(['password' => Hash::make($newPassword)]);
+
+        return redirect()->route('tenant.channel-partners.show', [$slug, $channelPartner])
+            ->with('show_cp_password', true)
+            ->with('cp_password_email', $cpUser->email)
+            ->with('cp_password_name', $cpUser->name)
+            ->with('cp_password_value', $newPassword)
+            ->with('success', 'Password reset. Copy it now — it won’t be shown again.');
     }
 
     public function cpApplicationApprove(Request $request, string $slug, CpApplication $cpApplication): RedirectResponse

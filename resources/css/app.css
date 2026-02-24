@@ -48,3 +48,13 @@
 .login-card.register-card { padding: 2rem 2.25rem; }
 .msg-success { font-size: 0.9375rem; color: var(--success); font-weight: 500; margin: 0 0 1rem 0; padding: 0.75rem 1rem; background: rgb(5 150 105 / 0.08); border-radius: var(--radius); }
 .login-form .field:last-of-type { margin-bottom: 0; }
+
+/* ----- Channel Partners: status tabs ----- */
+.cp-applications-tab:hover {
+  color: var(--text-primary);
+}
+.cp-applications-tab--active {
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom-color: var(--border-focus);
+}

@@ -86,6 +86,30 @@
                     </table>
                 @endif
 
+                @if(isset($editField) && $editField)
+                <h4 style="font-size: 0.9375rem; margin: 1rem 0 0.5rem 0;">Edit field: {{ $editField->label }}</h4>
+                <form method="POST" action="{{ route('tenant.forms.fields.update', [$tenant->slug, $form, $editField]) }}" style="margin-bottom: 1.5rem;">
+                    @csrf
+                    @method('PUT')
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end; margin-bottom: 0.5rem;">
+                        <div><label style="display: block; font-size: 0.8125rem;">Label</label><input type="text" name="label" required maxlength="255" value="{{ old('label', $editField->label) }}" style="width: 140px; padding: 0.375rem 0.5rem;"></div>
+                        <div><label style="display: block; font-size: 0.8125rem;">Key</label><input type="text" name="key" required maxlength="100" value="{{ old('key', $editField->key) }}" style="width: 120px; padding: 0.375rem 0.5rem;"></div>
+                        <div><label style="display: block; font-size: 0.8125rem;">Type</label>
+                            <select name="type" style="padding: 0.375rem 0.5rem;">
+                                @foreach(['text', 'number', 'email', 'textarea', 'date', 'dropdown', 'file'] as $t)
+                                    <option value="{{ $t }}" {{ old('type', $editField->type) === $t ? 'selected' : '' }}>{{ $t }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div><label style="display: block; font-size: 0.8125rem;">Required</label><input type="checkbox" name="required" value="1" {{ old('required', $editField->required) ? 'checked' : '' }}></div>
+                        <div><label style="display: block; font-size: 0.8125rem;">Placeholder</label><input type="text" name="placeholder" maxlength="255" value="{{ old('placeholder', $editField->placeholder) }}" style="width: 120px; padding: 0.375rem 0.5rem;"></div>
+                        <button type="submit" class="btn-primary" style="padding: 0.375rem 0.75rem;">Save field</button>
+                        <a href="{{ route('tenant.forms.edit', [$tenant->slug, $form]) }}" style="font-size: 0.875rem;">Cancel</a>
+                    </div>
+                    <div style="margin-top: 0.5rem;"><label style="font-size: 0.8125rem;">Options (for dropdown, one per line)</label><textarea name="options" rows="3" style="width: 100%; max-width: 320px; padding: 0.375rem 0.5rem;">{{ old('options', is_array($editField->options) ? implode("\n", $editField->options) : '') }}</textarea></div>
+                </form>
+                @endif
+
                 <h4 style="font-size: 0.9375rem; margin: 1rem 0 0.5rem 0;">Add field</h4>
                 <form method="POST" action="{{ route('tenant.forms.fields.store', [$tenant->slug, $form]) }}">
                     @csrf
