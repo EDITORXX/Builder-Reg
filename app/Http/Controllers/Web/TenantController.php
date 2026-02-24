@@ -22,7 +22,9 @@ use App\Services\DashboardService;
 use App\Services\ReportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -242,12 +244,18 @@ class TenantController extends Controller
                 ->paginate(20);
         }
         if ($section === 'cp-applications') {
-            $query = $builder->cpApplications()->with(['channelPartner.user', 'manager'])->latest();
-            if (request()->filled('status')) {
-                $query->where('status', request('status'));
+            try {
+                $query = $builder->cpApplications()->with(['channelPartner.user', 'manager'])->latest();
+                if (request()->filled('status')) {
+                    $query->where('status', request('status'));
+                }
+                $data['cpApplications'] = $query->paginate(20)->withQueryString();
+                $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
+            } catch (\Throwable $e) {
+                Log::warning('TenantController cp-applications section failed: '.$e->getMessage(), ['slug' => $slug, 'exception' => $e]);
+                $data['cpApplications'] = new LengthAwarePaginator(collect(), 0, 20, 1, ['path' => request()->url(), 'query' => request()->query()]);
+                $data['managers'] = collect();
             }
-            $data['cpApplications'] = $query->paginate(20)->withQueryString();
-            $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
         }
         if ($section === 'managers') {
             $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->orderBy('name')->get();
@@ -278,20 +286,26 @@ class TenantController extends Controller
             $data['reportsConversion'] = $reportService->conversionReport($builderFirmId, $filters);
         }
         if ($section === 'visit-verifications') {
-            $data['pendingLeads'] = Lead::with([
-                'project',
-                'customer',
-                'channelPartner.user',
-                'visitCheckIns' => fn ($q) => $q->where('verification_status', VisitCheckIn::VERIFICATION_PENDING)->orderByDesc('submitted_at'),
-            ])
-                ->where('verification_status', Lead::PENDING_VERIFICATION)
-                ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
-                ->orderByDesc('created_at')
-                ->paginate(20);
-            $leadIds = $data['pendingLeads']->pluck('id')->all();
-            $data['visitSchedulesByLeadId'] = $leadIds === []
-                ? collect()
-                : VisitSchedule::whereIn('lead_id', $leadIds)->get()->keyBy('lead_id');
+            try {
+                $data['pendingLeads'] = Lead::with([
+                    'project',
+                    'customer',
+                    'channelPartner.user',
+                    'visitCheckIns' => fn ($q) => $q->where('verification_status', VisitCheckIn::VERIFICATION_PENDING)->orderByDesc('submitted_at'),
+                ])
+                    ->where('verification_status', Lead::PENDING_VERIFICATION)
+                    ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
+                    ->orderByDesc('created_at')
+                    ->paginate(20);
+                $leadIds = $data['pendingLeads']->pluck('id')->all();
+                $data['visitSchedulesByLeadId'] = $leadIds === []
+                    ? collect()
+                    : VisitSchedule::whereIn('lead_id', $leadIds)->get()->keyBy('lead_id');
+            } catch (\Throwable $e) {
+                Log::warning('TenantController visit-verifications section failed: '.$e->getMessage(), ['slug' => $slug, 'exception' => $e]);
+                $data['pendingLeads'] = new LengthAwarePaginator(collect(), 0, 20, 1, ['path' => request()->url(), 'query' => request()->query()]);
+                $data['visitSchedulesByLeadId'] = collect();
+            }
         }
 
         return view('dashboard', $data);
