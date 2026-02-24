@@ -18,7 +18,9 @@
                 </div>
                 <h1 class="login-title">Sign in</h1>
                 <p class="login-subtitle">Enter your credentials to access the platform.</p>
-
+                @if(session('success'))
+                    <p class="msg-success">{{ session('success') }}</p>
+                @endif
                 <form method="POST" action="{{ route('login') }}" class="login-form">
                     @csrf
                     <div class="field">

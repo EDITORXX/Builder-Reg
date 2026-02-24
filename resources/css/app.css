@@ -26,7 +26,7 @@
 .login-form textarea:focus {
   outline: none;
   border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.15);
+  box-shadow: 0 0 0 3px rgb(5 150 105 / 0.2);
 }
 .login-form textarea {
   min-height: 4rem;

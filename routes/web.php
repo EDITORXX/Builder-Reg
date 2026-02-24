@@ -3,6 +3,7 @@
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\CpDashboardController;
 use App\Http\Controllers\Web\FormController;
+use App\Http\Controllers\Web\InstallController;
 use App\Http\Controllers\Web\PlanController;
 use App\Http\Controllers\Web\PublicRegistrationController;
 use App\Http\Controllers\Web\TenantController;
@@ -11,6 +12,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+Route::middleware('redirect_if_installed')->group(function () {
+    Route::get('/install', [InstallController::class, 'showForm'])->name('install.show');
+    Route::post('/install', [InstallController::class, 'store'])->name('install.store');
+    Route::get('/install/run', [InstallController::class, 'run'])->name('install.run');
 });
 
 Route::get('/register/cp/{builder_slug}', [PublicRegistrationController::class, 'showCpForm'])->name('register.cp');

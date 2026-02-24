@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'role' => \App\Http\Middleware\EnsureRole::class,
             'auth_web' => \App\Http\Middleware\AuthenticateWeb::class,
             'role_web' => \App\Http\Middleware\EnsureRoleWeb::class,
+            'redirect_if_installed' => \App\Http\Middleware\RedirectIfInstalled::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
