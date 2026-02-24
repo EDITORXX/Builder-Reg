@@ -225,7 +225,32 @@ class TenantController extends Controller
         if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
             abort(403, 'You do not have access to this tenant.');
         }
-        $stats = $dashboardService->getTenantDashboardStats($builder);
+        try {
+            $stats = $dashboardService->getTenantDashboardStats($builder);
+        } catch (\Throwable $e) {
+            Log::warning('TenantController getTenantDashboardStats failed (run migrations on server): '.$e->getMessage(), ['slug' => $slug, 'exception' => $e]);
+            $stats = [
+                'plan_limits' => [
+                    'max_users' => 10,
+                    'max_projects' => 5,
+                    'max_channel_partners' => 20,
+                    'max_leads' => 500,
+                ],
+                'usage' => [
+                    'users_count' => 0,
+                    'projects_count' => 0,
+                    'channel_partners_count' => 0,
+                    'leads_count' => 0,
+                ],
+                'leads_by_status' => collect(),
+                'conversion' => ['visit_done_count' => 0, 'booked_count' => 0, 'conversion_rate_percent' => 0.0],
+                'active_locks_count' => 0,
+                'recent_leads' => collect(),
+                'cp_applications_pending_count' => 0,
+                'cp_applications_approved_count' => 0,
+                'cp_applications_rejected_count' => 0,
+            ];
+        }
 
         $data = [
             'user' => $user,
