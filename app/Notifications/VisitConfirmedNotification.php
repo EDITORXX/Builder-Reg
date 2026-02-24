@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Models\BuilderFirm;
 use App\Models\Lead;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -17,7 +18,8 @@ class VisitConfirmedNotification extends Notification implements ShouldQueue
     public function __construct(
         public Lead $lead,
         public int $lockDays,
-        public string $endAt
+        public string $endAt,
+        public ?BuilderFirm $builder = null
     ) {}
 
     public function via(object $notifiable): array
@@ -28,9 +30,16 @@ class VisitConfirmedNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         $customerName = $this->lead->customer->name ?? 'Customer';
-        return (new MailMessage)
+        $message = (new MailMessage)
             ->subject('Visit confirmed – Lead locked')
             ->line("Visit confirmed! {$customerName} locked for {$this->lockDays} days till {$this->endAt}.");
+        if ($this->builder) {
+            $fromAddress = $this->builder->getMailFromAddress();
+            if ($fromAddress) {
+                $message->from($fromAddress, $this->builder->getMailFromName());
+            }
+        }
+        return $message;
     }
 
     public function toArray(object $notifiable): array

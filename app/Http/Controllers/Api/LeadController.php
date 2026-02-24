@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Customer;
 use App\Models\Lead;
+use App\Notifications\NewCustomerRegisteredNotification;
 use App\Services\AuditService;
 use App\Services\LockService;
 use Illuminate\Http\JsonResponse;
@@ -101,18 +102,36 @@ class LeadController extends Controller
             return response()->json(['error' => 'Forbidden.'], 403);
         }
 
-        $normalizedMobile = Customer::normalizeMobile($validated['mobile']);
-        $check = $this->lockService->checkLock($validated['project_id'], $normalizedMobile);
-        if ($check['locked']) {
+        $builder = $project->builderFirm;
+        $builder->load('plan');
+        $leadCount = Lead::whereHas('project', fn ($q) => $q->where('builder_firm_id', $builderFirmId))->count();
+        if ($leadCount >= $builder->getMaxLeads()) {
             return response()->json([
-                'error' => 'Customer is locked',
-                'lock_expires_at' => $check['lock_expires_at'] ?? null,
-                'days_remaining' => $check['days_remaining'] ?? null,
+                'error' => 'Lead limit reached for this tenant. Plan allows ' . $builder->getMaxLeads() . ' leads.',
             ], 422);
         }
 
+        $normalizedMobile = Customer::normalizeMobile($validated['mobile']);
+        $currentCpId = $request->user()->isChannelPartner() ? $request->user()->channelPartner->id : null;
+        $lockCheck = $this->lockService->checkLockAndDuplicate(
+            (int) $validated['project_id'],
+            $normalizedMobile,
+            $currentCpId
+        );
+        if (! $lockCheck['allowed']) {
+            return response()->json([
+                'error' => $lockCheck['message'],
+                'lock_expires_at' => $lockCheck['lock_expires_at'] ?? null,
+                'days_remaining' => $lockCheck['days_remaining'] ?? null,
+            ], 422);
+        }
+
+        $source = $lockCheck['is_revisit']
+            ? Lead::SOURCE_REVISIT
+            : ($validated['source'] ?? Lead::SOURCE_CHANNEL_PARTNER);
+
         try {
-            $lead = DB::transaction(function () use ($request, $validated, $normalizedMobile, $project) {
+            $lead = DB::transaction(function () use ($request, $validated, $normalizedMobile, $project, $source) {
                 $customer = Customer::firstOrCreate(
                     ['mobile' => $normalizedMobile],
                     [
@@ -134,7 +153,7 @@ class LeadController extends Controller
                     'channel_partner_id' => $request->user()->isChannelPartner() ? $request->user()->channelPartner->id : null,
                     'created_by' => $request->user()->id,
                     'status' => Lead::STATUS_NEW,
-                    'source' => $validated['source'] ?? Lead::SOURCE_CHANNEL_PARTNER,
+                    'source' => $source,
                     'budget' => $validated['budget'] ?? null,
                     'property_type' => $validated['property_type'] ?? null,
                     'notes' => $validated['notes'] ?? null,
@@ -166,6 +185,14 @@ class LeadController extends Controller
         }
 
         $lead->load(['project', 'customer', 'channelPartner']);
+        if ($lead->channel_partner_id) {
+            $lead->load(['channelPartner.user', 'project', 'customer']);
+            $builder = $project->builderFirm;
+            $cpUser = $lead->channelPartner?->user;
+            if ($cpUser && $cpUser->email) {
+                $cpUser->notify(new NewCustomerRegisteredNotification($builder, $lead));
+            }
+        }
         return response()->json(['data' => $lead, 'message' => 'Success'], 201);
     }
 

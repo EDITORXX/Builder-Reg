@@ -9,3 +9,42 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ----- Register / form pages: select, textarea, sections ----- */
+.login-form select,
+.login-form textarea {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.9375rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: inherit;
+  background: var(--bg-card);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.login-form select:focus,
+.login-form textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.15);
+}
+.login-form textarea {
+  min-height: 4rem;
+  resize: vertical;
+}
+.register-section {
+  margin-bottom: 1.75rem;
+}
+.register-section-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 1rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+}
+.register-section:first-child .register-section-title { margin-top: 0; }
+.login-container.register-wide { max-width: 480px; }
+.login-card.register-card { padding: 2rem 2.25rem; }
+.msg-success { font-size: 0.9375rem; color: var(--success); font-weight: 500; margin: 0 0 1rem 0; padding: 0.75rem 1rem; background: rgb(5 150 105 / 0.08); border-radius: var(--radius); }
+.login-form .field:last-of-type { margin-bottom: 0; }

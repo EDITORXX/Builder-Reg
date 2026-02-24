@@ -17,10 +17,16 @@ class BuilderController extends Controller
             'name' => 'required|string|max:255',
             'address' => 'nullable|string',
             'default_lock_days' => 'nullable|integer|min:1|max:365',
+            'logo_url' => 'nullable|string|url',
+            'primary_color' => 'nullable|string|max:50',
         ]);
         $validated['slug'] = Str::slug($validated['name']) . '-' . substr(uniqid(), -4);
         $validated['default_lock_days'] = $validated['default_lock_days'] ?? 30;
-        $validated['settings'] = [];
+        $validated['settings'] = array_filter([
+            'logo_url' => $validated['logo_url'] ?? null,
+            'primary_color' => $validated['primary_color'] ?? null,
+        ]);
+        unset($validated['logo_url'], $validated['primary_color']);
         $validated['is_active'] = true;
         $builder = BuilderFirm::create($validated);
         return response()->json(['data' => $builder, 'message' => 'Success'], 201);

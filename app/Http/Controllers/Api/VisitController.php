@@ -102,10 +102,12 @@ class VisitController extends Controller
         ]);
         $this->auditService->log($request->user()->id, 'lock_created', 'LeadLock', $lock->id, null, $lock->toArray(), null, $request);
         if ($lead->channel_partner_id && $lead->channelPartner?->user) {
+            $lead->load(['project.builderFirm', 'customer']);
             $lead->channelPartner->user->notify(new \App\Notifications\VisitConfirmedNotification(
                 $lead->fresh(['customer']),
                 $lock->end_at->diffInDays($lock->start_at),
-                $lock->end_at->format('d/m/Y')
+                $lock->end_at->format('d/m/Y'),
+                $lead->project?->builderFirm
             ));
         }
         return response()->json([
@@ -147,10 +149,12 @@ class VisitController extends Controller
         ]);
         $this->auditService->log($request->user()->id, 'lock_created', 'LeadLock', $lock->id, null, $lock->toArray(), $validated['notes'] ?? null, $request);
         if ($lead->channel_partner_id && $lead->channelPartner?->user) {
+            $lead->load(['project.builderFirm', 'customer']);
             $lead->channelPartner->user->notify(new \App\Notifications\VisitConfirmedNotification(
                 $lead->fresh(['customer']),
                 $lock->end_at->diffInDays($lock->start_at),
-                $lock->end_at->format('d/m/Y')
+                $lock->end_at->format('d/m/Y'),
+                $lead->project?->builderFirm
             ));
         }
         return response()->json([

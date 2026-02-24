@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\CpApplication;
+use App\Notifications\CpApplicationApprovedNotification;
+use App\Notifications\CpApplicationRejectedNotification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -80,12 +82,29 @@ class CpApplicationController extends Controller
     public function approve(CpApplication $cpApplication): JsonResponse
     {
         $this->authorize('approve', $cpApplication);
+        if ($cpApplication->status !== CpApplication::STATUS_APPROVED) {
+            $builder = $cpApplication->builderFirm;
+            $builder->load('plan');
+            $approvedCount = CpApplication::where('builder_firm_id', $cpApplication->builder_firm_id)
+                ->where('status', CpApplication::STATUS_APPROVED)
+                ->count();
+            if ($approvedCount >= $builder->getMaxChannelPartners()) {
+                return response()->json([
+                    'error' => 'Broker (channel partner) limit reached for this tenant. Plan allows ' . $builder->getMaxChannelPartners() . ' brokers.',
+                ], 422);
+            }
+        }
         $cpApplication->update([
             'status' => CpApplication::STATUS_APPROVED,
             'reviewed_by' => request()->user()->id,
             'reviewed_at' => now(),
             'notes' => null,
         ]);
+        $builder = $cpApplication->builderFirm;
+        $cpUser = $cpApplication->channelPartner?->user;
+        if ($cpUser && $cpUser->email) {
+            $cpUser->notify(new CpApplicationApprovedNotification($builder, $cpApplication));
+        }
         return response()->json(['data' => $cpApplication->fresh(['channelPartner.user', 'builderFirm']), 'message' => 'Success']);
     }
 
@@ -99,6 +118,11 @@ class CpApplicationController extends Controller
             'reviewed_at' => now(),
             'notes' => $validated['notes'],
         ]);
+        $builder = $cpApplication->builderFirm;
+        $cpUser = $cpApplication->channelPartner?->user;
+        if ($cpUser && $cpUser->email) {
+            $cpUser->notify(new CpApplicationRejectedNotification($builder, $cpApplication, $validated['notes']));
+        }
         return response()->json(['data' => $cpApplication->fresh(), 'message' => 'Success']);
     }
 

@@ -24,6 +24,7 @@ class Lead extends Model
     public const SOURCE_DIRECT = 'direct';
     public const SOURCE_ONLINE = 'online';
     public const SOURCE_REFERRAL = 'referral';
+    public const SOURCE_REVISIT = 'revisit';
 
     protected $fillable = [
         'project_id',

@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
+            'auth_web' => \App\Http\Middleware\AuthenticateWeb::class,
+            'role_web' => \App\Http\Middleware\EnsureRoleWeb::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

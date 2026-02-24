@@ -42,9 +42,15 @@ class ProjectController extends Controller
         }
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'location' => 'required|string|max:255',
+            'location' => 'nullable|string|max:255',
             'lock_days_override' => 'nullable|integer|min:1|max:365',
         ]);
+        $builder->load('plan');
+        if ($builder->projects()->count() >= $builder->getMaxProjects()) {
+            return response()->json([
+                'error' => 'Project limit reached for this tenant. Plan allows ' . $builder->getMaxProjects() . ' project(s).',
+            ], 422);
+        }
         $validated['builder_firm_id'] = $builder->id;
         $validated['status'] = 'active';
         $project = Project::create($validated);
