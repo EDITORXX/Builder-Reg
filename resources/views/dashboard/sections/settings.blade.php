@@ -40,11 +40,62 @@
             <div style="margin-bottom: 1rem;">
                 <label for="primary_color" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Primary colour</label>
                 <div style="display: flex; gap: 0.5rem; align-items: center;">
-                    <input id="primary_color_picker" type="color" value="{{ old('primary_color', $tenant->getPrimaryColor() ?? '#2563eb') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;" title="Pick colour">
-                    <input id="primary_color" type="text" name="primary_color" value="{{ old('primary_color', $tenant->getPrimaryColor() ?? '#2563eb') }}" maxlength="50" placeholder="#2563eb" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                    <input id="primary_color_picker" type="color" value="{{ old('primary_color', $tenant->getPrimaryColor() ?? '#2d5f5f') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;" title="Pick colour">
+                    <input id="primary_color" type="text" name="primary_color" value="{{ old('primary_color', $tenant->getPrimaryColor() ?? '#2d5f5f') }}" maxlength="50" placeholder="#2d5f5f" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
                 </div>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--text-secondary);">Used in dashboard and on CP/Customer registration pages (buttons, logo box when no logo).</p>
                 <script>document.getElementById('primary_color_picker').addEventListener('input', function(){ document.getElementById('primary_color').value = this.value; }); document.getElementById('primary_color').addEventListener('input', function(v){ var c = document.getElementById('primary_color_picker'); if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) c.value = this.value; });</script>
                 @error('primary_color')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <h3 style="font-size: 1rem; margin: 1.25rem 0 0.75rem 0;">Registration page theme</h3>
+            <p style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: var(--text-secondary);">These colours apply to CP and Customer registration pages only. Leave blank to use defaults.</p>
+            <div style="margin-bottom: 1rem;">
+                <label for="registration_bg" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Page background</label>
+                <input id="registration_bg" type="text" name="registration_bg" value="{{ old('registration_bg', $tenant->settings['registration_bg'] ?? '') }}" maxlength="500" placeholder="e.g. #0f172a or linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)" style="width: 100%; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                @error('registration_bg')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="registration_card_bg" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Card background</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input id="registration_card_bg_picker" type="color" value="{{ old('registration_card_bg', $tenant->settings['registration_card_bg'] ?? '#ffffff') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                    <input id="registration_card_bg" type="text" name="registration_card_bg" value="{{ old('registration_card_bg', $tenant->settings['registration_card_bg'] ?? '') }}" maxlength="50" placeholder="#ffffff" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                @error('registration_card_bg')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="registration_title_color" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Title colour</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input id="registration_title_color_picker" type="color" value="{{ old('registration_title_color', $tenant->settings['registration_title_color'] ?? '#1e3d3d') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                    <input id="registration_title_color" type="text" name="registration_title_color" value="{{ old('registration_title_color', $tenant->settings['registration_title_color'] ?? '') }}" maxlength="50" placeholder="#1e3d3d" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                @error('registration_title_color')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="registration_text_color" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Text colour (labels)</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input id="registration_text_color_picker" type="color" value="{{ old('registration_text_color', $tenant->settings['registration_text_color'] ?? '#1e3d3d') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                    <input id="registration_text_color" type="text" name="registration_text_color" value="{{ old('registration_text_color', $tenant->settings['registration_text_color'] ?? '') }}" maxlength="50" placeholder="#1e3d3d" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                @error('registration_text_color')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+            <div style="margin-bottom: 1rem;">
+                <label for="registration_subtitle_color" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Subtitle colour</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input id="registration_subtitle_color_picker" type="color" value="{{ old('registration_subtitle_color', $tenant->settings['registration_subtitle_color'] ?? '#4a6b6b') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;">
+                    <input id="registration_subtitle_color" type="text" name="registration_subtitle_color" value="{{ old('registration_subtitle_color', $tenant->settings['registration_subtitle_color'] ?? '') }}" maxlength="50" placeholder="#4a6b6b" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                @error('registration_subtitle_color')
                     <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
                 @enderror
             </div>

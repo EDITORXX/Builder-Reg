@@ -141,6 +141,22 @@ body { margin: 0; font-family: var(--font-sans); -webkit-font-smoothing: antiali
   border-radius: 0 0 var(--radius-lg) 0;
   box-shadow: var(--shadow-sm);
 }
+.topbar-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.topbar-menu-btn:hover { background: var(--bg-page); }
+.topbar-menu-icon { width: 1.375rem; height: 1.375rem; }
 .topbar-title { margin: 0; font-size: 1.25rem; font-weight: 600; color: var(--text-primary); }
 .topbar-subtitle { margin: 0.25rem 0 0 0; font-size: 0.875rem; color: var(--text-secondary); }
 .topbar-home {
@@ -154,6 +170,44 @@ body { margin: 0; font-family: var(--font-sans); -webkit-font-smoothing: antiali
 }
 .topbar-home:hover { background: rgb(45 95 95 / 0.08); color: var(--accent-hover); }
 .main-content { flex: 1; padding: 1.5rem; }
+
+/* ----- Mobile: responsive navigation ----- */
+@media (max-width: 767px) {
+  .topbar-menu-btn { display: flex; }
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+  .app-body.sidebar-open .sidebar-overlay { display: block; }
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    z-index: 1000;
+    width: 260px;
+    min-width: 260px;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease-out;
+    border-radius: 0;
+  }
+  .app-body.sidebar-open .sidebar { transform: translateX(0); }
+  .sidebar--icon-only {
+    width: 72px;
+    min-width: 72px;
+  }
+  .app-shell .main { margin-left: 0; }
+  .topbar {
+    padding: 0.75rem 1rem;
+    gap: 0.5rem;
+  }
+  .topbar-title { font-size: 1.0625rem; }
+  .topbar-subtitle { font-size: 0.8125rem; }
+  .main-content { padding: 1rem; }
+}
 
 /* ----- Cards ----- */
 .card {

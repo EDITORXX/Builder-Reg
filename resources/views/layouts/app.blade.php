@@ -16,10 +16,11 @@
     </style>
     @endif
 </head>
-<body class="app-body">
+<body class="app-body" id="app-body">
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
     <div class="app-shell">
         @php($navIconOnly = session('sidebar_nav_icon_only', false))
-        <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}">
+        <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}" id="sidebar">
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
                     <img src="{{ $tenant_logo_url }}" alt="Logo" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
@@ -60,6 +61,9 @@
         </aside>
         <main class="main">
             <header class="topbar">
+                <button type="button" class="topbar-menu-btn" id="topbar-menu-btn" aria-label="Open menu" aria-expanded="false">
+                    <svg class="topbar-menu-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                </button>
                 <div class="topbar-left">
                     <h1 class="topbar-title">@yield('heading', 'Dashboard')</h1>
                     <p class="topbar-subtitle">@yield('subtitle', '')</p>
@@ -71,5 +75,35 @@
             </div>
         </main>
     </div>
+    <script>
+(function () {
+    var body = document.getElementById('app-body');
+    var btn = document.getElementById('topbar-menu-btn');
+    var overlay = document.getElementById('sidebar-overlay');
+    var sidebar = document.getElementById('sidebar');
+    if (!body || !btn || !overlay) return;
+    function openSidebar() {
+        body.classList.add('sidebar-open');
+        btn.setAttribute('aria-expanded', 'true');
+        btn.setAttribute('aria-label', 'Close menu');
+        overlay.setAttribute('aria-hidden', 'false');
+    }
+    function closeSidebar() {
+        body.classList.remove('sidebar-open');
+        btn.setAttribute('aria-expanded', 'false');
+        btn.setAttribute('aria-label', 'Open menu');
+        overlay.setAttribute('aria-hidden', 'true');
+    }
+    btn.addEventListener('click', function () {
+        if (body.classList.contains('sidebar-open')) closeSidebar(); else openSidebar();
+    });
+    overlay.addEventListener('click', closeSidebar);
+    if (sidebar) {
+        sidebar.addEventListener('click', function (e) {
+            if (e.target.closest('a') || e.target.closest('button')) closeSidebar();
+        });
+    }
+})();
+    </script>
 </body>
 </html>

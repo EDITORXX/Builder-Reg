@@ -7,6 +7,18 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600,700" rel="stylesheet" />
     <link rel="stylesheet" href="{{ asset('css/app.css') }}">
+    <style>
+        .login-logo-img { width: 48px; height: 48px; object-fit: contain; display: block; }
+        .login-page { background: {{ $builder->getRegistrationPageBg() }}; }
+        .login-card { background: {{ $builder->getRegistrationCardBg() }}; }
+        .login-logo-icon { background: {{ $builder->getPrimaryColor() ?? '#2d5f5f' }}; }
+        .login-title { color: {{ $builder->getRegistrationTitleColor() }}; }
+        .login-subtitle { color: {{ $builder->getRegistrationSubtitleColor() }}; }
+        .login-logo-text { color: {{ $builder->getRegistrationTitleColor() }}; }
+        .btn-primary { background: {{ $builder->getPrimaryColor() ?? '#2d5f5f' }}; }
+        .btn-primary:hover { background: {{ $builder->getPrimaryColor() ?? '#2d5f5f' }}; opacity: 0.95; }
+        .login-back:hover { color: {{ $builder->getPrimaryColor() ?? '#2d5f5f' }}; }
+    </style>
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body>
@@ -14,7 +26,11 @@
         <div class="login-container register-wide">
             <div class="login-card register-card">
                 <div class="login-logo">
-                    <span class="login-logo-icon">BP</span>
+                    @if($builder->getLogoUrl())
+                        <img src="{{ $builder->getLogoUrl() }}" alt="" class="login-logo-img" width="48" height="48">
+                    @else
+                        <span class="login-logo-icon">BP</span>
+                    @endif
                     <span class="login-logo-text">{{ $builder->name }}</span>
                 </div>
                 <h1 class="login-title">Scan QR to check-in</h1>

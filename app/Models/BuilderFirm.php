@@ -103,6 +103,36 @@ class BuilderFirm extends Model
         return $this->settings['primary_color'] ?? null;
     }
 
+    public function getRegistrationPageBg(): string
+    {
+        $v = $this->settings['registration_bg'] ?? null;
+        return $v !== null && $v !== '' ? (string) $v : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)';
+    }
+
+    public function getRegistrationCardBg(): string
+    {
+        $v = $this->settings['registration_card_bg'] ?? null;
+        return $v !== null && $v !== '' ? (string) $v : '#ffffff';
+    }
+
+    public function getRegistrationTitleColor(): string
+    {
+        $v = $this->settings['registration_title_color'] ?? null;
+        return $v !== null && $v !== '' ? (string) $v : '#1e3d3d';
+    }
+
+    public function getRegistrationTextColor(): string
+    {
+        $v = $this->settings['registration_text_color'] ?? null;
+        return $v !== null && $v !== '' ? (string) $v : '#1e3d3d';
+    }
+
+    public function getRegistrationSubtitleColor(): string
+    {
+        $v = $this->settings['registration_subtitle_color'] ?? null;
+        return $v !== null && $v !== '' ? (string) $v : '#4a6b6b';
+    }
+
     public function getMailFromAddress(): ?string
     {
         $addr = $this->settings['mail_from_address'] ?? null;

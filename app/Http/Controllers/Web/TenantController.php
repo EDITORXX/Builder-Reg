@@ -305,6 +305,75 @@ class TenantController extends Controller
             'default_lock_days' => 'nullable|integer|min:1|max:365',
             'mail_from_address' => 'nullable|email|max:255',
             'mail_from_name' => 'nullable|string|max:100',
+            'registration_bg' => [
+                'nullable',
+                'string',
+                'max:500',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        return;
+                    }
+                    if (preg_match('/^linear-gradient\s*\([^)]+\)$/s', $value)) {
+                        return;
+                    }
+                    $fail('Page background must be a hex colour (e.g. #0f172a) or linear-gradient(...).');
+                },
+            ],
+            'registration_card_bg' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        $fail('Card background must be a hex colour (e.g. #ffffff).');
+                    }
+                },
+            ],
+            'registration_title_color' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        $fail('Title colour must be a hex colour (e.g. #1e3d3d).');
+                    }
+                },
+            ],
+            'registration_text_color' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        $fail('Text colour must be a hex colour (e.g. #1e3d3d).');
+                    }
+                },
+            ],
+            'registration_subtitle_color' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        $fail('Subtitle colour must be a hex colour (e.g. #4a6b6b).');
+                    }
+                },
+            ],
         ]);
         $settings = $builder->settings ?? [];
         if ($request->hasFile('logo')) {
@@ -321,6 +390,11 @@ class TenantController extends Controller
         }
         if (array_key_exists('mail_from_name', $validated)) {
             $settings['mail_from_name'] = $validated['mail_from_name'] ?: null;
+        }
+        foreach (['registration_bg', 'registration_card_bg', 'registration_title_color', 'registration_text_color', 'registration_subtitle_color'] as $key) {
+            if (array_key_exists($key, $validated)) {
+                $settings[$key] = $validated[$key] !== null && $validated[$key] !== '' ? $validated[$key] : null;
+            }
         }
         $update = [
             'settings' => $settings,
