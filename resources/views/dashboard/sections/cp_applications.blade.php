@@ -29,6 +29,7 @@
                             <th style="padding: 0.5rem 0;">Name</th>
                             <th style="padding: 0.5rem 0;">Firm / Email</th>
                             <th style="padding: 0.5rem 0;">Status</th>
+                            <th style="padding: 0.5rem 0;">Manager</th>
                             <th style="padding: 0.5rem 0;">Applied</th>
                             <th style="padding: 0.5rem 0;">View</th>
                             @if($statusFilter === 'pending')
@@ -42,6 +43,21 @@
                                 <td style="padding: 0.5rem 0;">{{ $app->channelPartner?->user?->name ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $app->channelPartner?->firm_name ?? '—' }}<br><span style="font-size: 0.8125rem; color: var(--text-secondary);">{{ $app->channelPartner?->user?->email ?? '' }}</span></td>
                                 <td style="padding: 0.5rem 0;">{{ $app->status }}</td>
+                                <td style="padding: 0.5rem 0;">
+                                    @if($app->status === 'approved' && isset($managers) && $managers->isNotEmpty())
+                                        <form method="POST" action="{{ route('tenant.cp-applications.assign-manager', [$tenant->slug, $app]) }}" style="display: inline;">
+                                            @csrf
+                                            <select name="manager_id" onchange="this.form.submit()" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border-radius: var(--radius); min-width: 120px;">
+                                                <option value="">— None —</option>
+                                                @foreach($managers as $m)
+                                                    <option value="{{ $m->id }}" {{ (int)($app->manager_id ?? 0) === (int)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </form>
+                                    @else
+                                        {{ $app->manager?->name ?? '—' }}
+                                    @endif
+                                </td>
                                 <td style="padding: 0.5rem 0;">{{ $app->created_at?->format('M j, Y') ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">
                                     @if($app->channelPartner)

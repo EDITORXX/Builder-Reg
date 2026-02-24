@@ -31,6 +31,17 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth_web')->group(function () {
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+    Route::post('/preferences/sidebar-mode', function (\Illuminate\Http\Request $request) {
+        $mode = $request->input('mode', 'toggle');
+        if ($mode === 'icon') {
+            session(['sidebar_nav_icon_only' => true]);
+        } elseif ($mode === 'text') {
+            session(['sidebar_nav_icon_only' => false]);
+        } else {
+            session(['sidebar_nav_icon_only' => ! session('sidebar_nav_icon_only', false)]);
+        }
+        return redirect()->back();
+    })->name('preferences.sidebar-mode');
 
     Route::get('/t/{slug}', [TenantController::class, 'show'])->name('tenant.dashboard');
 
@@ -67,6 +78,9 @@ Route::middleware('auth_web')->group(function () {
     Route::get('/t/{slug}/channel-partners/{channelPartner}', [TenantController::class, 'channelPartnerShow'])->name('tenant.channel-partners.show');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/approve', [TenantController::class, 'cpApplicationApprove'])->name('tenant.cp-applications.approve');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/reject', [TenantController::class, 'cpApplicationReject'])->name('tenant.cp-applications.reject');
+    Route::post('/t/{slug}/cp-applications/{cpApplication}/assign-manager', [TenantController::class, 'cpApplicationAssignManager'])->name('tenant.cp-applications.assign-manager');
+    Route::get('/t/{slug}/managers', [TenantController::class, 'showSection'])->defaults('section', 'managers')->name('tenant.managers.index');
+    Route::post('/t/{slug}/managers', [TenantController::class, 'managerStore'])->name('tenant.managers.store');
     Route::get('/t/{slug}/forms', [TenantController::class, 'showSection'])->defaults('section', 'forms')->name('tenant.forms.index');
     Route::get('/t/{slug}/forms/create', [FormController::class, 'create'])->name('tenant.forms.create');
     Route::post('/t/{slug}/forms', [FormController::class, 'store'])->name('tenant.forms.store');

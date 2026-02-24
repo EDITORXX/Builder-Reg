@@ -7,6 +7,7 @@
         'leads' => 'Leads',
         'settings' => 'Settings',
         'cp-applications' => 'Channel Partners',
+        'managers' => 'Managers',
         'forms' => 'Forms',
         'locks' => 'Locks',
         'visits' => 'Visits',

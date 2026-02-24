@@ -100,8 +100,10 @@
                                         </select>
                                     @elseif($field->type === 'file')
                                         <input id="field_{{ $field->id }}" type="file" name="{{ $field->key }}" {{ $field->required ? 'required' : '' }}>
+                                    @elseif($field->type === 'date')
+                                        <input id="field_{{ $field->id }}" type="date" name="{{ $field->key }}" value="{{ old($field->key, date('Y-m-d')) }}" {{ $field->required ? 'required' : '' }} readonly style="background: var(--bg-page); cursor: not-allowed;">
                                     @else
-                                        <input id="field_{{ $field->id }}" type="{{ $field->type === 'date' ? 'date' : ($field->type === 'number' ? 'number' : 'text') }}" name="{{ $field->key }}" value="{{ old($field->key) }}" {{ $field->required ? 'required' : '' }} placeholder="{{ $field->placeholder }}">
+                                        <input id="field_{{ $field->id }}" type="{{ $field->type === 'number' ? 'number' : 'text' }}" name="{{ $field->key }}" value="{{ old($field->key) }}" {{ $field->required ? 'required' : '' }} placeholder="{{ $field->placeholder }}">
                                     @endif
                                     @error($field->key)<p class="login-error">{{ $message }}</p>@enderror
                                 </div>

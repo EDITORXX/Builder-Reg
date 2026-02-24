@@ -18,7 +18,8 @@
 </head>
 <body class="app-body">
     <div class="app-shell">
-        <aside class="sidebar">
+        @php($navIconOnly = session('sidebar_nav_icon_only', false))
+        <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}">
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
                     <img src="{{ $tenant_logo_url }}" alt="Logo" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
@@ -29,18 +30,30 @@
             </div>
             <nav class="sidebar-nav">
                 @foreach($navItems ?? [] as $item)
-                <a href="{{ $item['url'] }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'sidebar-link-active' : '' }}">
+                <a href="{{ $item['url'] }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'sidebar-link-active' : '' }}" title="{{ $item['label'] }}">
                     @include('partials.sidebar-icon', ['name' => $item['icon']])
-                    {{ $item['label'] }}
+                    <span class="sidebar-link-text">{{ $item['label'] }}</span>
                 </a>
                 @endforeach
             </nav>
             <div class="sidebar-footer">
+                <form method="POST" action="{{ route('preferences.sidebar-mode') }}" class="sidebar-mode-form">
+                    @csrf
+                    <button type="submit" class="sidebar-link sidebar-link-toggle" title="{{ $navIconOnly ? 'Show text' : 'Icons only' }}">
+                        @if($navIconOnly)
+                            <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                            <span class="sidebar-link-text">Show text</span>
+                        @else
+                            <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
+                            <span class="sidebar-link-text">Icons only</span>
+                        @endif
+                    </button>
+                </form>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="sidebar-link sidebar-link-logout">
+                    <button type="submit" class="sidebar-link sidebar-link-logout" title="Log out">
                         <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                        Log out
+                        <span class="sidebar-link-text">Log out</span>
                     </button>
                 </form>
             </div>

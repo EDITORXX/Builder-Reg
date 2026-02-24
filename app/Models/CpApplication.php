@@ -21,6 +21,7 @@ class CpApplication extends Model
         'status',
         'reviewed_by',
         'reviewed_at',
+        'manager_id',
         'notes',
     ];
 
@@ -44,5 +45,10 @@ class CpApplication extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function manager(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'manager_id');
     }
 }

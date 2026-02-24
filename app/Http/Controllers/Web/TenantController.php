@@ -225,11 +225,15 @@ class TenantController extends Controller
                 ->paginate(20);
         }
         if ($section === 'cp-applications') {
-            $query = $builder->cpApplications()->with(['channelPartner.user'])->latest();
+            $query = $builder->cpApplications()->with(['channelPartner.user', 'manager'])->latest();
             if (request()->filled('status')) {
                 $query->where('status', request('status'));
             }
             $data['cpApplications'] = $query->paginate(20)->withQueryString();
+            $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
+        }
+        if ($section === 'managers') {
+            $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->orderBy('name')->get();
         }
         if ($section === 'forms') {
             $data['forms'] = $builder->forms()->with('formFields')->orderBy('type')->orderBy('name')->get();
@@ -418,6 +422,7 @@ class TenantController extends Controller
         $visitDoneCount = $rankRow ? $rankRow->visit_done_count : 0;
         $rank = $rankRow ? $rankRow->rank : null;
 
+        $managers = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
         return view('dashboard.cp_detail', [
             'user' => $user,
             'tenant' => $builder,
@@ -426,6 +431,7 @@ class TenantController extends Controller
             'leads' => $leads,
             'visit_done_count' => $visitDoneCount,
             'rank' => $rank,
+            'managers' => $managers,
         ]);
     }
 
@@ -488,5 +494,68 @@ class TenantController extends Controller
             $cpUser->notify(new CpApplicationRejectedNotification($builder, $cpApplication, $validated['notes']));
         }
         return redirect()->route('tenant.cp-applications.index', ['slug' => $slug])->with('success', 'CP rejected.');
+    }
+
+    public function managerStore(Request $request, string $slug): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::with('plan')->where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
+            abort(403, 'Only Builder Admin or Super Admin can create managers.');
+        }
+        if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+        $builder->load('plan');
+        $managersCount = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->count();
+        $maxUsers = $builder->getMaxUsers();
+        $currentUsers = User::where('builder_firm_id', $builder->id)->count();
+        if ($currentUsers >= $maxUsers) {
+            return redirect()->route('tenant.managers.index', $slug)->with('error', 'User limit reached for your plan.');
+        }
+        User::create([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+            'password' => Hash::make($validated['password']),
+            'role' => User::ROLE_MANAGER,
+            'builder_firm_id' => $builder->id,
+            'is_active' => true,
+        ]);
+        return redirect()->route('tenant.managers.index', $slug)->with('success', 'Manager created. They can log in with the given email and password.');
+    }
+
+    public function cpApplicationAssignManager(Request $request, string $slug, CpApplication $cpApplication): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403);
+        }
+        if ((int) $cpApplication->builder_firm_id !== (int) $builder->id) {
+            abort(404);
+        }
+        $validated = $request->validate([
+            'manager_id' => 'nullable|exists:users,id',
+        ]);
+        $managerId = $validated['manager_id'] ?? null;
+        if ($managerId !== null) {
+            $manager = User::find($managerId);
+            if (! $manager || (int) $manager->builder_firm_id !== (int) $builder->id || $manager->role !== User::ROLE_MANAGER) {
+                return redirect()->back()->with('error', 'Invalid manager.');
+            }
+        }
+        $cpApplication->update(['manager_id' => $managerId]);
+        return redirect()->back()->with('success', 'Manager assigned.');
     }
 }

@@ -83,7 +83,7 @@ class AuthController extends Controller
 
     public function logout(Request $request): RedirectResponse
     {
-        session()->forget(['api_token', 'user']);
+        session()->forget(['api_token', 'user', 'sidebar_nav_icon_only']);
         return redirect()->route('login');
     }
 }

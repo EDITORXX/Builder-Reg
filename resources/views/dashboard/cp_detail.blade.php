@@ -54,6 +54,23 @@
                     @endforeach
                 </dd>
                 @endif
+                @if(isset($managers) && $managers->isNotEmpty() && ($user->isSuperAdmin() || $user->isBuilderAdmin()))
+                <dt style="font-weight: 600;">Assigned manager</dt>
+                <dd style="margin: 0;">
+                    <form method="POST" action="{{ route('tenant.cp-applications.assign-manager', [$tenant->slug, $cpApplication]) }}" style="display: inline;">
+                        @csrf
+                        <select name="manager_id" onchange="this.form.submit()" style="padding: 0.375rem 0.5rem; font-size: 0.875rem; border-radius: var(--radius); min-width: 160px;">
+                            <option value="">— None —</option>
+                            @foreach($managers as $m)
+                                <option value="{{ $m->id }}" {{ (int)($cpApplication->manager_id ?? 0) === (int)$m->id ? 'selected' : '' }}>{{ $m->name }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </dd>
+                @elseif($cpApplication->manager)
+                <dt style="font-weight: 600;">Assigned manager</dt>
+                <dd style="margin: 0;">{{ $cpApplication->manager->name }}</dd>
+                @endif
             </dl>
         </div>
     </div>

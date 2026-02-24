@@ -78,6 +78,14 @@ return [
             'context' => 'tenant',
         ],
         [
+            'key' => 'managers',
+            'label' => 'Managers',
+            'route' => 'tenant.managers.index',
+            'icon' => 'user-plus',
+            'roles' => ['super_admin', 'builder_admin'],
+            'context' => 'tenant',
+        ],
+        [
             'key' => 'forms',
             'label' => 'Forms',
             'route' => 'tenant.forms.index',
