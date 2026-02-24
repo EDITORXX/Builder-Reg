@@ -14,6 +14,7 @@ use App\Models\Plan;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Visit;
+use App\Models\VisitCheckIn;
 use App\Models\VisitSchedule;
 use App\Notifications\CpApplicationApprovedNotification;
 use App\Notifications\CpApplicationRejectedNotification;
@@ -281,15 +282,16 @@ class TenantController extends Controller
                 'project',
                 'customer',
                 'channelPartner.user',
-                'visitCheckIns' => fn ($q) => $q->where('verification_status', 'pending_verification')->orderByDesc('submitted_at'),
+                'visitCheckIns' => fn ($q) => $q->where('verification_status', VisitCheckIn::VERIFICATION_PENDING)->orderByDesc('submitted_at'),
             ])
                 ->where('verification_status', Lead::PENDING_VERIFICATION)
                 ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
                 ->orderByDesc('created_at')
                 ->paginate(20);
-            $data['visitSchedulesByLeadId'] = VisitSchedule::whereIn('lead_id', $data['pendingLeads']->pluck('id'))
-                ->get()
-                ->keyBy('lead_id');
+            $leadIds = $data['pendingLeads']->pluck('id')->all();
+            $data['visitSchedulesByLeadId'] = $leadIds === []
+                ? collect()
+                : VisitSchedule::whereIn('lead_id', $leadIds)->get()->keyBy('lead_id');
         }
 
         return view('dashboard', $data);

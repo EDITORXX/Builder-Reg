@@ -1,5 +1,6 @@
 @php
     $statusFilter = request('status', 'pending');
+    $stats = $stats ?? [];
     $pendingCount = $stats['cp_applications_pending_count'] ?? 0;
     $approvedCount = $stats['cp_applications_approved_count'] ?? 0;
     $rejectedCount = $stats['cp_applications_rejected_count'] ?? 0;

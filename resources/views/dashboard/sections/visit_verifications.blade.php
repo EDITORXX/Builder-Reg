@@ -1,6 +1,10 @@
+@php
+    $pendingLeads = $pendingLeads ?? collect();
+    $visitSchedulesByLeadId = $visitSchedulesByLeadId ?? collect();
+@endphp
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
-        <h2 class="card-title">{{ $sectionLabel }}</h2>
+        <h2 class="card-title">{{ $sectionLabel ?? 'Pending Visit Verifications' }}</h2>
     </div>
     <div class="card-body">
         @if(session('success'))
