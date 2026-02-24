@@ -8,9 +8,14 @@
     <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-header" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem;">
             <h2 class="card-title">Scheduled visits</h2>
-            @if($buildersWithFeature->isNotEmpty())
-                <a href="{{ route('cp.scheduled-visits.create') }}" class="btn-primary" style="text-decoration: none;">Schedule visit</a>
-            @endif
+            <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                @if($buildersWithFeature->isNotEmpty())
+                    <a href="{{ route('cp.scheduled-visits.create') }}" class="btn-primary" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); font-weight: 600; text-decoration: none; color: #fff;">Schedule site visit</a>
+                @else
+                    <span class="btn-primary" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); font-weight: 600; opacity: 0.6; cursor: not-allowed;" title="Contact your builder admin to enable this feature">Schedule site visit</span>
+                @endif
+                <a href="{{ route('cp.direct-visit') }}" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); border: 1px solid var(--border, #ccc); background: var(--bg-card, #fff); font-weight: 500; text-decoration: none; color: inherit;">Register direct visit</a>
+            </div>
         </div>
         <div class="card-body">
             @if(session('success'))
@@ -21,11 +26,14 @@
             @endif
 
             @if($buildersWithFeature->isEmpty())
-                <p style="margin: 0; color: var(--text-secondary);">Scheduled visit (QR) feature is not enabled for any of your builders. Contact your builder admin.</p>
-                <p style="margin: 0.75rem 0 0;"><a href="{{ route('cp.direct-visit') }}">Register a direct visit</a> (no QR) instead.</p>
+                <p style="margin: 0; color: var(--text-secondary);">Scheduled visit (QR) feature is not enabled for any of your builders. Contact your builder admin to enable it.</p>
+                <p style="margin: 1rem 0 0;"><a href="{{ route('cp.direct-visit') }}" class="btn-primary" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); font-weight: 600; text-decoration: none; color: #fff;">Register direct visit (on-site, no QR)</a></p>
             @elseif($schedules->isEmpty())
                 <p style="margin: 0; color: var(--text-secondary);">No scheduled visits yet.</p>
-                <p style="margin: 0.75rem 0 0;"><a href="{{ route('cp.scheduled-visits.create') }}">Schedule a visit</a> or <a href="{{ route('cp.direct-visit') }}">register direct visit</a>.</p>
+                <p style="margin: 1rem 0 0; display: flex; flex-wrap: wrap; gap: 0.75rem;">
+                    <a href="{{ route('cp.scheduled-visits.create') }}" class="btn-primary" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); font-weight: 600; text-decoration: none; color: #fff;">Schedule a visit</a>
+                    <a href="{{ route('cp.direct-visit') }}" style="display: inline-block; padding: 0.5rem 1rem; border-radius: var(--radius, 6px); border: 1px solid var(--border); background: transparent; text-decoration: none;">Register direct visit</a>
+                </p>
             @else
                 <div style="overflow-x: auto;">
                     <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
@@ -59,5 +67,4 @@
             @endif
         </div>
     </div>
-    <p style="font-size: 0.875rem;"><a href="{{ route('cp.direct-visit') }}">Register direct visit</a> (on-site, no scheduling)</p>
 @endsection
