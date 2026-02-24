@@ -15,6 +15,7 @@ use App\Services\QrCodeService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Symfony\Component\HttpFoundation\Response;
@@ -56,8 +57,9 @@ class CpVisitScheduleController extends Controller
         $buildersWithFeature = $this->getBuildersWithFeature();
 
         if ($buildersWithFeature->isEmpty()) {
+            $emptyPaginator = new LengthAwarePaginator(collect(), 0, 20, 1);
             return view('cp.scheduled_visits.index', [
-                'schedules' => collect()->paginate(20),
+                'schedules' => $emptyPaginator,
                 'buildersWithFeature' => $buildersWithFeature,
                 'limitInfo' => [],
             ]);
