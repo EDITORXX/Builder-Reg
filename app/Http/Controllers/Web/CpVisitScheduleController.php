@@ -8,6 +8,7 @@ use App\Models\CpApplication;
 use App\Models\Customer;
 use App\Models\Lead;
 use App\Models\Project;
+use App\Models\VisitCheckIn;
 use App\Models\VisitSchedule;
 use App\Services\LockService;
 use App\Services\QrCodeService;
@@ -263,14 +264,41 @@ class CpVisitScheduleController extends Controller
             $customer->update(['name' => $request->input('customer_name')]);
         }
         $path = $request->file('visit_photo')->store('visit_photos/' . now()->format('Ym'), 'public');
-        Lead::create([
+        $now = now();
+        $lead = Lead::firstOrCreate(
+            [
+                'project_id' => $project->id,
+                'customer_id' => $customer->id,
+            ],
+            [
+                'channel_partner_id' => $cp->id,
+                'created_by' => null,
+                'status' => Lead::STATUS_PENDING_VERIFICATION,
+                'source' => Lead::SOURCE_CHANNEL_PARTNER,
+                'visit_photo_path' => $path,
+                'visit_status' => Lead::VISITED,
+                'verification_status' => Lead::PENDING_VERIFICATION,
+                'sales_status' => Lead::SALES_NEW,
+            ]
+        );
+        if (! $lead->wasRecentlyCreated) {
+            $lead->update([
+                'channel_partner_id' => $cp->id,
+                'visit_photo_path' => $path,
+                'visit_status' => Lead::VISITED,
+                'verification_status' => Lead::PENDING_VERIFICATION,
+            ]);
+        }
+        VisitCheckIn::create([
+            'lead_id' => $lead->id,
+            'visit_schedule_id' => null,
             'project_id' => $project->id,
-            'customer_id' => $customer->id,
             'channel_partner_id' => $cp->id,
-            'created_by' => null,
-            'status' => Lead::STATUS_PENDING_VERIFICATION,
-            'source' => Lead::SOURCE_CHANNEL_PARTNER,
+            'customer_mobile' => $normalizedMobile,
+            'submitted_at' => $now,
             'visit_photo_path' => $path,
+            'verification_status' => VisitCheckIn::VERIFICATION_PENDING,
+            'visit_type' => VisitCheckIn::TYPE_DIRECT,
         ]);
         return redirect()->route('cp.direct-visit')->with('success', 'Visit registered. Pending manager verification.');
     }

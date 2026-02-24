@@ -14,7 +14,7 @@ class LockService
     {
         $bookedBlock = Lead::where('project_id', $projectId)
             ->whereHas('customer', fn ($q) => $q->where('mobile', $normalizedMobile))
-            ->where('status', Lead::STATUS_BOOKED)
+            ->where('sales_status', Lead::SALES_BOOKED)
             ->exists();
 
         if ($bookedBlock) {
@@ -60,7 +60,7 @@ class LockService
     {
         $bookedBlock = Lead::where('project_id', $projectId)
             ->whereHas('customer', fn ($q) => $q->where('mobile', $normalizedMobile))
-            ->where('status', Lead::STATUS_BOOKED)
+            ->where('sales_status', Lead::SALES_BOOKED)
             ->first();
 
         if ($bookedBlock) {
@@ -220,5 +220,30 @@ class LockService
             'unlocked_by' => $userId,
             'unlock_reason' => $reason,
         ]);
+    }
+
+    /**
+     * Reset lock window (same CP revisit within 30 days): start_at = now, end_at = now + lock_days.
+     */
+    public function resetLock(LeadLock $lock): void
+    {
+        $project = $lock->project;
+        $lockDays = $project->getLockDays();
+        $now = now();
+        $lock->update([
+            'start_at' => $now,
+            'end_at' => $now->copy()->addDays($lockDays),
+        ]);
+    }
+
+    /**
+     * Expire active lock for (project_id, customer_mobile) so a new lock can be created (e.g. ownership transfer).
+     */
+    public function expireActiveLockFor(int $projectId, string $customerMobile): void
+    {
+        LeadLock::active()
+            ->where('project_id', $projectId)
+            ->where('customer_mobile', $customerMobile)
+            ->update(['status' => LeadLock::STATUS_EXPIRED]);
     }
 }

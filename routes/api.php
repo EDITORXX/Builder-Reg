@@ -50,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/leads', [LeadController::class, 'store']);
     Route::get('/leads/{lead}', [LeadController::class, 'show']);
     Route::patch('/leads/{lead}/status', [LeadController::class, 'updateStatus']);
+    Route::patch('/leads/{lead}/sales-status', [LeadController::class, 'updateSalesStatus']);
     Route::post('/leads/{lead}/assign', [LeadController::class, 'assign']);
 
     Route::post('/leads/{lead}/visits', [VisitController::class, 'store']);

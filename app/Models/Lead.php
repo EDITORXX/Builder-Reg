@@ -12,6 +12,7 @@ class Lead extends Model
 {
     use HasFactory, SoftDeletes;
 
+    // Legacy single status (deprecated; use three-track below)
     public const STATUS_NEW = 'new';
     public const STATUS_CONTACTED = 'contacted';
     public const STATUS_VISIT_SCHEDULED = 'visit_scheduled';
@@ -22,6 +23,24 @@ class Lead extends Model
     public const STATUS_PENDING_VERIFICATION = 'pending_verification';
     public const STATUS_VERIFIED_VISIT = 'verified_visit';
     public const STATUS_REJECTED = 'rejected';
+
+    // Visit status (lead.visit_status)
+    public const VISIT_SCHEDULED = 'visit_scheduled';
+    public const VISITED = 'visited';
+    public const REVISIT = 'revisit';
+    public const VISIT_CANCELLED = 'visit_cancelled';
+
+    // Verification status (lead.verification_status)
+    public const PENDING_VERIFICATION = 'pending_verification';
+    public const VERIFIED_VISIT = 'verified_visit';
+    public const REJECTED_VERIFICATION = 'rejected_verification';
+
+    // Sales status (lead.sales_status)
+    public const SALES_NEW = 'new';
+    public const SALES_NEGOTIATION = 'negotiation';
+    public const SALES_HOLD = 'hold';
+    public const SALES_BOOKED = 'booked';
+    public const SALES_LOST = 'lost';
 
     public const SOURCE_CHANNEL_PARTNER = 'channel_partner';
     public const SOURCE_DIRECT = 'direct';
@@ -42,11 +61,32 @@ class Lead extends Model
         'notes',
         'visit_photo_path',
         'verification_reject_reason',
+        'visit_status',
+        'verification_status',
+        'sales_status',
+        'last_verified_visit_at',
     ];
 
     protected function casts(): array
     {
-        return [];
+        return [
+            'last_verified_visit_at' => 'datetime',
+        ];
+    }
+
+    public function visitCheckIns(): HasMany
+    {
+        return $this->hasMany(VisitCheckIn::class, 'lead_id');
+    }
+
+    public function isPendingVerification(): bool
+    {
+        return $this->verification_status === self::PENDING_VERIFICATION;
+    }
+
+    public function isVerifiedVisit(): bool
+    {
+        return $this->verification_status === self::VERIFIED_VISIT;
     }
 
     public function project(): BelongsTo
@@ -96,6 +136,6 @@ class Lead extends Model
 
     public function isBooked(): bool
     {
-        return $this->status === self::STATUS_BOOKED;
+        return $this->sales_status === self::SALES_BOOKED;
     }
 }

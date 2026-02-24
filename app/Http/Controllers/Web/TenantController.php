@@ -275,8 +275,13 @@ class TenantController extends Controller
             $data['reportsConversion'] = $reportService->conversionReport($builderFirmId, $filters);
         }
         if ($section === 'visit-verifications') {
-            $data['pendingLeads'] = Lead::with(['project', 'customer', 'channelPartner.user'])
-                ->where('status', Lead::STATUS_PENDING_VERIFICATION)
+            $data['pendingLeads'] = Lead::with([
+                'project',
+                'customer',
+                'channelPartner.user',
+                'visitCheckIns' => fn ($q) => $q->where('verification_status', 'pending_verification')->orderByDesc('submitted_at'),
+            ])
+                ->where('verification_status', Lead::PENDING_VERIFICATION)
                 ->whereHas('project', fn ($q) => $q->where('builder_firm_id', $builder->id))
                 ->orderByDesc('created_at')
                 ->paginate(20);
@@ -302,6 +307,19 @@ class TenantController extends Controller
             'logo' => 'nullable|image|max:2048',
             'logo_url' => 'nullable|string|max:500',
             'primary_color' => 'nullable|string|max:50',
+            'navigation_color' => [
+                'nullable',
+                'string',
+                'max:50',
+                function ($attribute, $value, $fail) {
+                    if ($value === null || $value === '') {
+                        return;
+                    }
+                    if (! preg_match('/^#[0-9A-Fa-f]{6}$/', $value)) {
+                        $fail('Navigation colour must be a hex colour (e.g. #2d5f5f).');
+                    }
+                },
+            ],
             'default_lock_days' => 'nullable|integer|min:1|max:365',
             'mail_from_address' => 'nullable|email|max:255',
             'mail_from_name' => 'nullable|string|max:100',
@@ -384,6 +402,9 @@ class TenantController extends Controller
         }
         if (array_key_exists('primary_color', $validated)) {
             $settings['primary_color'] = $validated['primary_color'] ?: null;
+        }
+        if (array_key_exists('navigation_color', $validated)) {
+            $settings['navigation_color'] = $validated['navigation_color'] ?: null;
         }
         if (array_key_exists('mail_from_address', $validated)) {
             $settings['mail_from_address'] = $validated['mail_from_address'] ?: null;

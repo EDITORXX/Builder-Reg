@@ -49,6 +49,14 @@ class LeadPolicy
         return $user->isManager() || $user->isSalesExec() || $user->isBuilderAdmin() || $user->isSuperAdmin();
     }
 
+    public function updateSalesStatus(User $user, Lead $lead): bool
+    {
+        if ($user->isChannelPartner()) {
+            return $lead->channel_partner_id && (int) $lead->channel_partner_id === (int) $user->channelPartner?->id;
+        }
+        return $user->isManager() || $user->isSalesExec() || $user->isBuilderAdmin() || $user->isSuperAdmin();
+    }
+
     public function assign(User $user, Lead $lead): bool
     {
         return $user->isManager() || $user->isBuilderAdmin() || $user->isSuperAdmin();

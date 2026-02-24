@@ -23,7 +23,7 @@
                                 <td style="padding: 0.5rem 0;">{{ $lead->customer?->name ?? '—' }}<br><span style="font-size: 0.8125rem; color: var(--text-secondary);">{{ $lead->customer?->mobile ?? '' }}</span></td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->project?->name ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->channelPartner?->user?->name ?? $lead->channelPartner?->firm_name ?? '—' }}</td>
-                                <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->status ?? '—') }}</td>
+                                <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->sales_status ?? '—') }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->created_at?->format('M j, Y') ?? '—' }}</td>
                             </tr>
                         @endforeach

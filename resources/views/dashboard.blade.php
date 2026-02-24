@@ -104,15 +104,13 @@
             <h2 class="card-title">{{ $tenant->name }}</h2>
         </div>
         <div class="card-body">
-            <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0;">Leads by status</h3>
+            <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0;">Leads by sales status</h3>
             <div class="stat-grid" style="margin-bottom: 1rem;">
                 @php
                     $statusLabels = [
                         'new' => 'New',
-                        'contacted' => 'Contacted',
-                        'visit_scheduled' => 'Visit scheduled',
-                        'visit_done' => 'Visit done',
                         'negotiation' => 'Negotiation',
+                        'hold' => 'Hold',
                         'booked' => 'Booked',
                         'lost' => 'Lost',
                     ];
@@ -164,7 +162,7 @@
                         @foreach($stats['recent_leads']->take(5) as $lead)
                         <tr style="border-bottom: 1px solid var(--border);">
                             <td style="padding: 0.5rem 0;">{{ $lead->project?->name ?? '—' }}</td>
-                            <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->status ?? '—') }}</td>
+                            <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->sales_status ?? '—') }}</td>
                             <td style="padding: 0.5rem 0;">{{ $lead->created_at?->format('M j, Y') ?? '—' }}</td>
                         </tr>
                         @endforeach

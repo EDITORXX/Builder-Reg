@@ -103,6 +103,16 @@ class BuilderFirm extends Model
         return $this->settings['primary_color'] ?? null;
     }
 
+    /** Navigation (sidebar) colour for this builder and their CPs. Falls back to primary colour then default. */
+    public function getNavigationColor(): string
+    {
+        $v = $this->settings['navigation_color'] ?? null;
+        if ($v !== null && $v !== '') {
+            return (string) $v;
+        }
+        return $this->getPrimaryColor() ?? '#2d5f5f';
+    }
+
     public function getRegistrationPageBg(): string
     {
         $v = $this->settings['registration_bg'] ?? null;

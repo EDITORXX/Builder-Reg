@@ -24,5 +24,6 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (\Illuminate\Console\Scheduling\Schedule $schedule): void {
         $schedule->job(new \App\Jobs\ExpireLocksJob())->hourly();
+        $schedule->job(new \App\Jobs\ExpireScheduledVisitsJob())->hourly();
     })
     ->create();

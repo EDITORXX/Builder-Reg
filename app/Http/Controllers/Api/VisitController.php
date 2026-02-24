@@ -29,7 +29,7 @@ class VisitController extends Controller
             'scheduled_at' => $validated['scheduled_at'],
             'status' => Visit::STATUS_SCHEDULED,
         ]);
-        $lead->update(['status' => Lead::STATUS_VISIT_SCHEDULED]);
+        $lead->update(['visit_status' => Lead::VISIT_SCHEDULED]);
         LeadActivity::create([
             'lead_id' => $lead->id,
             'created_by' => $request->user()->id,
@@ -84,7 +84,7 @@ class VisitController extends Controller
             'confirmed_by' => $request->user()->id,
         ]);
         $lead = $visit->lead;
-        $lead->update(['status' => Lead::STATUS_VISIT_DONE]);
+        $lead->update(['visit_status' => Lead::VISITED, 'verification_status' => Lead::VERIFIED_VISIT]);
         $lock = $this->lockService->createLockForVisit($visit);
         LeadActivity::create([
             'lead_id' => $lead->id,
@@ -131,7 +131,7 @@ class VisitController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
         $lead = $visit->lead;
-        $lead->update(['status' => Lead::STATUS_VISIT_DONE]);
+        $lead->update(['visit_status' => Lead::VISITED, 'verification_status' => Lead::VERIFIED_VISIT]);
         $lock = $this->lockService->createLockForVisit($visit);
         LeadActivity::create([
             'lead_id' => $lead->id,

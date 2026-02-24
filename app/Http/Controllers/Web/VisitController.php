@@ -82,7 +82,7 @@ class VisitController extends Controller
             'notes' => $validated['notes'] ?? null,
         ]);
         $lead = $visit->lead;
-        $lead->update(['status' => \App\Models\Lead::STATUS_VISIT_DONE]);
+        $lead->update(['visit_status' => \App\Models\Lead::VISITED, 'verification_status' => \App\Models\Lead::VERIFIED_VISIT]);
         $lock = $this->lockService->createLockForVisit($visit);
         LeadActivity::create([
             'lead_id' => $lead->id,
@@ -143,7 +143,7 @@ class VisitController extends Controller
             'confirmed_by' => session('user')->id,
         ]);
         $lead = $visit->lead;
-        $lead->update(['status' => \App\Models\Lead::STATUS_VISIT_DONE]);
+        $lead->update(['visit_status' => \App\Models\Lead::VISITED, 'verification_status' => \App\Models\Lead::VERIFIED_VISIT]);
         $lock = $this->lockService->createLockForVisit($visit);
         LeadActivity::create([
             'lead_id' => $lead->id,

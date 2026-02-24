@@ -50,6 +50,19 @@
                 @enderror
             </div>
 
+            <div style="margin-bottom: 1rem;">
+                <label for="navigation_color" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Navigation colour</label>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                    <input id="navigation_color_picker" type="color" value="{{ old('navigation_color', $tenant->settings['navigation_color'] ?? $tenant->getPrimaryColor() ?? '#2d5f5f') }}" style="width: 3rem; height: 2.25rem; padding: 0; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;" title="Pick colour">
+                    <input id="navigation_color" type="text" name="navigation_color" value="{{ old('navigation_color', $tenant->settings['navigation_color'] ?? '') }}" maxlength="50" placeholder="Leave blank to use Primary colour" style="flex: 1; padding: 0.5rem 0.75rem; border: 1px solid var(--border); border-radius: var(--radius);">
+                </div>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--text-secondary);">Sidebar colour for your dashboard and your CPs. Blank = same as Primary colour.</p>
+                <script>document.getElementById('navigation_color_picker').addEventListener('input', function(){ document.getElementById('navigation_color').value = this.value; }); document.getElementById('navigation_color').addEventListener('input', function(){ var c = document.getElementById('navigation_color_picker'); if(/^#[0-9A-Fa-f]{6}$/.test(this.value)) c.value = this.value; });</script>
+                @error('navigation_color')
+                    <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--error);">{{ $message }}</p>
+                @enderror
+            </div>
+
             <h3 style="font-size: 1rem; margin: 1.25rem 0 0.75rem 0;">Registration page theme</h3>
             <p style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: var(--text-secondary);">These colours apply to CP and Customer registration pages only. Leave blank to use defaults.</p>
             <div style="margin-bottom: 1rem;">

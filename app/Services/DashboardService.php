@@ -49,13 +49,13 @@ class DashboardService
         );
 
         $byStatus = (clone $leadQuery)
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
+            ->selectRaw('sales_status, count(*) as total')
+            ->groupBy('sales_status')
             ->get()
-            ->keyBy('status');
+            ->keyBy('sales_status');
 
-        $visitDone = (clone $leadQuery)->where('status', Lead::STATUS_VISIT_DONE)->count();
-        $booked = (clone $leadQuery)->where('status', Lead::STATUS_BOOKED)->count();
+        $visitDone = (clone $leadQuery)->where('verification_status', Lead::VERIFIED_VISIT)->count();
+        $booked = (clone $leadQuery)->where('sales_status', Lead::SALES_BOOKED)->count();
         $conversionRate = $visitDone > 0 ? round($booked / $visitDone * 100, 2) : 0.0;
 
         $activeLocksCount = LeadLock::query()

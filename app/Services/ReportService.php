@@ -31,10 +31,10 @@ class ReportService
             $query->where('project_id', $filters['project_id']);
         }
         if (! empty($filters['status'])) {
-            $query->where('status', $filters['status']);
+            $query->where('sales_status', $filters['status']);
         }
         $byProject = (clone $query)->selectRaw('project_id, count(*) as total')->groupBy('project_id')->get();
-        $byStatus = (clone $query)->selectRaw('status, count(*) as total')->groupBy('status')->get();
+        $byStatus = (clone $query)->selectRaw('sales_status as status, count(*) as total')->groupBy('sales_status')->get();
 
         return [
             'by_project' => $byProject,
@@ -81,7 +81,7 @@ class ReportService
             ->selectRaw('channel_partner_id, count(*) as lead_count')
             ->groupBy('channel_partner_id')
             ->get();
-        $bookedPerCp = (clone $query)->where('status', Lead::STATUS_BOOKED)
+        $bookedPerCp = (clone $query)->where('sales_status', Lead::SALES_BOOKED)
             ->selectRaw('channel_partner_id, count(*) as booked_count')
             ->groupBy('channel_partner_id')
             ->get()
@@ -114,8 +114,8 @@ class ReportService
         if (! empty($filters['date_to'])) {
             $query->whereDate('created_at', '<=', $filters['date_to']);
         }
-        $visitDone = (clone $query)->where('status', Lead::STATUS_VISIT_DONE)->count();
-        $booked = (clone $query)->where('status', Lead::STATUS_BOOKED)->count();
+        $visitDone = (clone $query)->where('verification_status', Lead::VERIFIED_VISIT)->count();
+        $booked = (clone $query)->where('sales_status', Lead::SALES_BOOKED)->count();
         $rate = $visitDone > 0 ? round($booked / $visitDone * 100, 2) : 0;
 
         return [
@@ -138,7 +138,7 @@ class ReportService
             ->pluck('channel_partner_id');
 
         $visitDoneCounts = Lead::whereHas('project', fn ($q) => $q->where('builder_firm_id', $builderFirmId))
-            ->where('status', Lead::STATUS_VISIT_DONE)
+            ->where('verification_status', Lead::VERIFIED_VISIT)
             ->whereNotNull('channel_partner_id')
             ->selectRaw('channel_partner_id, count(*) as visit_done_count')
             ->groupBy('channel_partner_id')

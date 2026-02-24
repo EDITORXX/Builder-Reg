@@ -20,22 +20,29 @@
                             <th style="padding: 0.5rem 0;">Customer</th>
                             <th style="padding: 0.5rem 0;">Project</th>
                             <th style="padding: 0.5rem 0;">CP</th>
+                            <th style="padding: 0.5rem 0;">Visit type</th>
                             <th style="padding: 0.5rem 0;">Scheduled</th>
+                            <th style="padding: 0.5rem 0;">Submitted</th>
                             <th style="padding: 0.5rem 0;">Photo</th>
                             <th style="padding: 0.5rem 0;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($pendingLeads as $lead)
-                            @php $vs = $visitSchedulesByLeadId[$lead->id] ?? null; @endphp
+                            @php
+                                $vs = $visitSchedulesByLeadId[$lead->id] ?? null;
+                                $pendingCheckIn = $lead->visitCheckIns->first();
+                            @endphp
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 0.5rem 0;">{{ $lead->customer?->name ?? '—' }}<br><span style="font-size: 0.8125rem;">{{ $lead->customer?->mobile ?? '' }}</span></td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->project?->name ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->channelPartner?->firm_name ?? $lead->channelPartner?->user?->name ?? '—' }}</td>
+                                <td style="padding: 0.5rem 0;">{{ $pendingCheckIn?->visit_type === 'scheduled_checkin' ? 'Scheduled' : 'Direct' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $vs?->scheduled_at?->format('M j, H:i') ?? '—' }}</td>
+                                <td style="padding: 0.5rem 0;">{{ $pendingCheckIn?->submitted_at?->format('M j, H:i') ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">
-                                    @if($lead->visit_photo_path)
-                                        <a href="{{ asset('storage/' . $lead->visit_photo_path) }}" target="_blank" rel="noopener" style="font-size: 0.8125rem;">View</a>
+                                    @if($pendingCheckIn?->visit_photo_path ?? $lead->visit_photo_path)
+                                        <a href="{{ asset('storage/' . ($pendingCheckIn?->visit_photo_path ?? $lead->visit_photo_path)) }}" target="_blank" rel="noopener" style="font-size: 0.8125rem;">View</a>
                                     @else
                                         —
                                     @endif

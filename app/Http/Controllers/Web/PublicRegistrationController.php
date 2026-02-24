@@ -241,6 +241,7 @@ class PublicRegistrationController extends Controller
             'channel_partner_id' => $isWalkin ? null : $validated['cp_id'],
             'created_by' => null,
             'status' => Lead::STATUS_NEW,
+            'sales_status' => Lead::SALES_NEW,
             'source' => $source,
             'budget' => $validated['budget'] ?? null,
             'property_type' => $validated['property_type'] ?? null,

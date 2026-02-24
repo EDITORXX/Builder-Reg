@@ -7,6 +7,7 @@ use App\Models\BuilderFirm;
 use App\Models\Customer;
 use App\Models\Form;
 use App\Models\Lead;
+use App\Models\VisitCheckIn;
 use App\Models\VisitSchedule;
 use App\Services\LockService;
 use Illuminate\Http\RedirectResponse;
@@ -97,20 +98,49 @@ class VisitCheckinController extends Controller
             'public'
         );
 
-        $lead = Lead::create([
+        $now = now();
+        $lead = Lead::firstOrCreate(
+            [
+                'project_id' => $schedule->project_id,
+                'customer_id' => $customer->id,
+            ],
+            [
+                'channel_partner_id' => $schedule->channel_partner_id,
+                'created_by' => null,
+                'status' => Lead::STATUS_PENDING_VERIFICATION,
+                'source' => Lead::SOURCE_CHANNEL_PARTNER,
+                'visit_photo_path' => $path,
+                'visit_status' => Lead::VISITED,
+                'verification_status' => Lead::PENDING_VERIFICATION,
+                'sales_status' => Lead::SALES_NEW,
+            ]
+        );
+
+        if (! $lead->wasRecentlyCreated) {
+            $lead->update([
+                'channel_partner_id' => $schedule->channel_partner_id,
+                'visit_photo_path' => $path,
+                'visit_status' => Lead::VISITED,
+                'verification_status' => Lead::PENDING_VERIFICATION,
+            ]);
+        }
+
+        VisitCheckIn::create([
+            'lead_id' => $lead->id,
+            'visit_schedule_id' => $schedule->id,
             'project_id' => $schedule->project_id,
-            'customer_id' => $customer->id,
             'channel_partner_id' => $schedule->channel_partner_id,
-            'created_by' => null,
-            'status' => Lead::STATUS_PENDING_VERIFICATION,
-            'source' => Lead::SOURCE_CHANNEL_PARTNER,
+            'customer_mobile' => $normalizedMobile,
+            'submitted_at' => $now,
             'visit_photo_path' => $path,
+            'verification_status' => VisitCheckIn::VERIFICATION_PENDING,
+            'visit_type' => VisitCheckIn::TYPE_SCHEDULED_CHECKIN,
         ]);
 
         $schedule->update([
             'status' => VisitSchedule::STATUS_CHECKED_IN,
             'lead_id' => $lead->id,
-            'checked_in_at' => now(),
+            'checked_in_at' => $now,
         ]);
 
         return redirect()->route('visit.checkin.thanks');

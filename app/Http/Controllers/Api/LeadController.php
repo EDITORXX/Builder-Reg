@@ -35,7 +35,17 @@ class LeadController extends Controller
         }
         if ($request->filled('status')) {
             $statuses = array_map('trim', explode(',', $request->status));
-            $query->whereIn('status', $statuses);
+            $query->whereIn('sales_status', $statuses);
+        }
+        if ($request->filled('sales_status')) {
+            $statuses = array_map('trim', explode(',', $request->sales_status));
+            $query->whereIn('sales_status', $statuses);
+        }
+        if ($request->filled('visit_status')) {
+            $query->where('visit_status', $request->visit_status);
+        }
+        if ($request->filled('verification_status')) {
+            $query->where('verification_status', $request->verification_status);
         }
         if ($request->filled('channel_partner_id')) {
             $query->where('channel_partner_id', $request->channel_partner_id);
@@ -153,6 +163,7 @@ class LeadController extends Controller
                     'channel_partner_id' => $request->user()->isChannelPartner() ? $request->user()->channelPartner->id : null,
                     'created_by' => $request->user()->id,
                     'status' => Lead::STATUS_NEW,
+                    'sales_status' => Lead::SALES_NEW,
                     'source' => $source,
                     'budget' => $validated['budget'] ?? null,
                     'property_type' => $validated['property_type'] ?? null,
@@ -207,8 +218,8 @@ class LeadController extends Controller
     {
         $this->authorize('updateStatus', $lead);
         $validated = $request->validate(['status' => 'required|in:new,contacted,visit_scheduled,visit_done,negotiation,booked,lost']);
-        $oldStatus = $lead->status;
-        $lead->update(['status' => $validated['status']]);
+        $oldStatus = $lead->sales_status;
+        $lead->update(['sales_status' => $validated['status'], 'status' => $validated['status']]);
         \App\Models\LeadActivity::create([
             'lead_id' => $lead->id,
             'created_by' => $request->user()->id,
@@ -216,7 +227,24 @@ class LeadController extends Controller
             'payload' => ['from' => $oldStatus, 'to' => $validated['status']],
             'created_at' => now(),
         ]);
-        $this->auditService->log($request->user()->id, 'status_changed', 'Lead', $lead->id, ['status' => $oldStatus], ['status' => $validated['status']], null, $request);
+        $this->auditService->log($request->user()->id, 'status_changed', 'Lead', $lead->id, ['sales_status' => $oldStatus], ['sales_status' => $validated['status']], null, $request);
+        return response()->json(['data' => $lead->fresh(), 'message' => 'Success']);
+    }
+
+    public function updateSalesStatus(Request $request, Lead $lead): JsonResponse
+    {
+        $this->authorize('updateSalesStatus', $lead);
+        $validated = $request->validate(['sales_status' => 'required|in:new,negotiation,hold,booked,lost']);
+        $oldStatus = $lead->sales_status;
+        $lead->update(['sales_status' => $validated['sales_status']]);
+        \App\Models\LeadActivity::create([
+            'lead_id' => $lead->id,
+            'created_by' => $request->user()->id,
+            'type' => 'sales_status_changed',
+            'payload' => ['from' => $oldStatus, 'to' => $validated['sales_status']],
+            'created_at' => now(),
+        ]);
+        $this->auditService->log($request->user()->id, 'sales_status_changed', 'Lead', $lead->id, ['sales_status' => $oldStatus], ['sales_status' => $validated['sales_status']], null, $request);
         return response()->json(['data' => $lead->fresh(), 'message' => 'Success']);
     }
 
