@@ -91,4 +91,18 @@ class User extends Authenticatable
         }
         return (int) $this->builder_firm_id === (int) $builderFirmId;
     }
+
+    /** Human-readable role label for UI (e.g. SaaS Admin, Builder Admin, Channel Partner). */
+    public function getRoleLabel(): string
+    {
+        return match ($this->role ?? '') {
+            self::ROLE_SUPER_ADMIN => 'SaaS Admin',
+            self::ROLE_BUILDER_ADMIN => 'Builder Admin',
+            self::ROLE_MANAGER => 'Builder Manager',
+            self::ROLE_SALES_EXEC => 'Sales Exec',
+            self::ROLE_VIEWER => 'Viewer',
+            self::ROLE_CHANNEL_PARTNER => 'Channel Partner',
+            default => str_replace('_', ' ', ucfirst($this->role ?? 'User')),
+        };
+    }
 }

@@ -18,6 +18,7 @@ class NavComposer
         $navItems = $this->buildNavItems($user, $context, $tenant);
 
         $view->with('navItems', $navItems);
+        $view->with('navUser', $user);
     }
 
     private function resolveContext(?User $user, $tenant): string

@@ -22,8 +22,10 @@ use App\Services\ReportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TenantController extends Controller
 {
@@ -597,6 +599,90 @@ class TenantController extends Controller
             ->with('cp_password_name', $cpUser->name)
             ->with('cp_password_value', $newPassword)
             ->with('success', 'Password reset. Copy it now — it won’t be shown again.');
+    }
+
+    public function cpSetInactive(string $slug, ChannelPartner $channelPartner): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403, 'You do not have access to this tenant.');
+        }
+        $cpApplication = CpApplication::where('builder_firm_id', $builder->id)
+            ->where('channel_partner_id', $channelPartner->id)
+            ->first();
+        if (! $cpApplication) {
+            abort(404, 'This channel partner has no application with this builder.');
+        }
+        $cpUser = $channelPartner->user;
+        if (! $cpUser) {
+            return redirect()->back()->with('error', 'No user account found for this channel partner.');
+        }
+        $cpUser->update(['is_active' => ! $cpUser->is_active]);
+        $label = $cpUser->is_active ? 'activated' : 'marked inactive';
+        return redirect()->back()->with('success', "Channel partner {$label}. They can no longer log in when inactive.");
+    }
+
+    public function cpDelete(string $slug, ChannelPartner $channelPartner): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
+            abort(403, 'Only Builder Admin or Super Admin can delete a channel partner.');
+        }
+        if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        $cpApplication = CpApplication::where('builder_firm_id', $builder->id)
+            ->where('channel_partner_id', $channelPartner->id)
+            ->first();
+        if (! $cpApplication) {
+            abort(404, 'This channel partner has no application with this builder.');
+        }
+        $cpUser = $channelPartner->user;
+        if ($cpUser) {
+            $cpUser->delete();
+        }
+        return redirect()->route('tenant.cp-applications.index', ['slug' => $slug, 'status' => 'approved'])
+            ->with('success', 'Channel partner account removed. They can no longer log in.');
+    }
+
+    public function leadVisitPhoto(string $slug, Lead $lead): StreamedResponse|RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403, 'You do not have access to this tenant.');
+        }
+        if (! $lead->project || (int) $lead->project->builder_firm_id !== (int) $builder->id) {
+            abort(404, 'Lead not found for this tenant.');
+        }
+        $path = $lead->visit_photo_path;
+        if (! $path) {
+            $firstCheckIn = $lead->visitCheckIns()->first();
+            $path = $firstCheckIn?->visit_photo_path;
+        }
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            abort(404, 'Visit photo not found.');
+        }
+        $mime = match (strtolower(pathinfo($path, PATHINFO_EXTENSION))) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            default => 'application/octet-stream',
+        };
+        return response()->streamDownload(function () use ($path) {
+            echo Storage::disk('public')->get($path);
+        }, basename($path), ['Content-Type' => $mime], 'inline');
     }
 
     public function cpApplicationApprove(Request $request, string $slug, CpApplication $cpApplication): RedirectResponse

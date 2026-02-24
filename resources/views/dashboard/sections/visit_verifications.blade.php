@@ -42,7 +42,7 @@
                                 <td style="padding: 0.5rem 0;">{{ $pendingCheckIn?->submitted_at?->format('M j, H:i') ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">
                                     @if($pendingCheckIn?->visit_photo_path ?? $lead->visit_photo_path)
-                                        <a href="{{ asset('storage/' . ($pendingCheckIn?->visit_photo_path ?? $lead->visit_photo_path)) }}" target="_blank" rel="noopener" style="font-size: 0.8125rem;">View</a>
+                                        <a href="{{ route('tenant.leads.visit-photo', [$tenant->slug, $lead]) }}" target="_blank" rel="noopener" style="font-size: 0.8125rem;">View</a>
                                     @else
                                         —
                                     @endif

@@ -70,7 +70,10 @@ class AuthController extends Controller
                     return redirect()->route('tenant.dashboard', ['slug' => $builder->slug]);
                 }
             }
-            abort(403, 'Only Super Admin can access this dashboard.');
+            if ($user->isChannelPartner()) {
+                return redirect()->route('cp.dashboard');
+            }
+            return redirect()->route('profile.show');
         }
 
         $stats = $dashboardService->getSuperAdminStats();

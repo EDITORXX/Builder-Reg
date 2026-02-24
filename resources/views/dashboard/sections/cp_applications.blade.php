@@ -78,6 +78,15 @@
                                                     @csrf
                                                     <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-decoration: underline;">Reset password</button>
                                                 </form>
+                                                <form method="POST" action="{{ route('tenant.channel-partners.inactive', [$tenant->slug, $app->channelPartner]) }}" style="display: inline; margin-left: 0.25rem;">
+                                                    @csrf
+                                                    <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-decoration: underline;">{{ $app->channelPartner->user?->is_active ? 'Inactive' : 'Activate' }}</button>
+                                                </form>
+                                                <form method="POST" action="{{ route('tenant.channel-partners.delete', [$tenant->slug, $app->channelPartner]) }}" style="display: inline;" onsubmit="return confirm('Remove this channel partner? They will no longer be able to log in. This cannot be undone.');">
+                                                    @method('DELETE')
+                                                    @csrf
+                                                    <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--error); background: none; border: none; cursor: pointer; text-decoration: underline;">Delete</button>
+                                                </form>
                                             @endif
                                         @else
                                             —

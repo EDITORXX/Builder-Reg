@@ -17,10 +17,28 @@
 @section('subtitle', 'Channel partner details')
 
 @section('content')
-    <div style="margin-bottom: 1rem; font-size: 0.875rem;">
-        <a href="{{ route('tenant.cp-applications.index', ['slug' => $tenant->slug]) }}">Channel Partners</a>
-        <span style="color: var(--text-secondary);"> / </span>
-        <span>{{ $cpName }}</span>
+    <div style="margin-bottom: 1rem; font-size: 0.875rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+        <span>
+            <a href="{{ route('tenant.cp-applications.index', ['slug' => $tenant->slug]) }}">Channel Partners</a>
+            <span style="color: var(--text-secondary);"> / </span>
+            <span>{{ $cpName }}</span>
+            @if($channelPartner->user && !$channelPartner->user->is_active)
+                <span style="margin-left: 0.5rem; padding: 0.125rem 0.5rem; font-size: 0.75rem; background: var(--error); color: #fff; border-radius: var(--radius);">Inactive</span>
+            @endif
+        </span>
+        @if($user->isSuperAdmin() || $user->isBuilderAdmin())
+        <span style="display: flex; gap: 0.5rem;">
+            <form method="POST" action="{{ route('tenant.channel-partners.inactive', [$tenant->slug, $channelPartner]) }}" style="display: inline;">
+                @csrf
+                <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-card); cursor: pointer;">{{ $channelPartner->user?->is_active ? 'Mark inactive' : 'Activate' }}</button>
+            </form>
+            <form method="POST" action="{{ route('tenant.channel-partners.delete', [$tenant->slug, $channelPartner]) }}" style="display: inline;" onsubmit="return confirm('Remove this channel partner? They will no longer be able to log in. This cannot be undone.');">
+                @method('DELETE')
+                @csrf
+                <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--error); background: none; border: none; cursor: pointer; text-decoration: underline;">Delete</button>
+            </form>
+        </span>
+        @endif
     </div>
 
     @if(session('success'))

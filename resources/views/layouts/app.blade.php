@@ -29,6 +29,12 @@
                 @endif
                 <span class="sidebar-brand-text">{{ optional($tenant)->name ?? 'Builder Partner' }}</span>
             </div>
+            @if(isset($navUser) && $navUser)
+            <div class="sidebar-user" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem;">
+                <div style="font-weight: 600; color: var(--text-primary);">{{ $navUser->name }}</div>
+                <div style="color: var(--text-secondary); margin-top: 0.125rem;">{{ $navUser->getRoleLabel() }}</div>
+            </div>
+            @endif
             <nav class="sidebar-nav">
                 @foreach($navItems ?? [] as $item)
                 <a href="{{ $item['url'] }}" class="sidebar-link {{ request()->routeIs($item['route']) ? 'sidebar-link-active' : '' }}" title="{{ $item['label'] }}">

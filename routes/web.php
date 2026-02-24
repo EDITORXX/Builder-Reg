@@ -5,6 +5,7 @@ use App\Http\Controllers\Web\CpDashboardController;
 use App\Http\Controllers\Web\FormController;
 use App\Http\Controllers\Web\InstallController;
 use App\Http\Controllers\Web\PlanController;
+use App\Http\Controllers\Web\ProfileController;
 use App\Http\Controllers\Web\PublicRegistrationController;
 use App\Http\Controllers\Web\SystemController;
 use App\Http\Controllers\Web\TenantController;
@@ -56,9 +57,9 @@ Route::middleware('auth_web')->group(function () {
 
     Route::get('/t/{slug}', [TenantController::class, 'show'])->name('tenant.dashboard');
 
-    Route::get('/profile', function () {
-        return redirect()->route('dashboard');
-    })->name('profile.show');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
 
     Route::get('/cp/dashboard', [CpDashboardController::class, 'dashboard'])->name('cp.dashboard');
     Route::get('/cp/leads', [CpDashboardController::class, 'leads'])->name('cp.leads');
@@ -101,6 +102,9 @@ Route::middleware('auth_web')->group(function () {
     Route::get('/t/{slug}/cp-applications', [TenantController::class, 'showSection'])->defaults('section', 'cp-applications')->name('tenant.cp-applications.index');
     Route::get('/t/{slug}/channel-partners/{channelPartner}', [TenantController::class, 'channelPartnerShow'])->name('tenant.channel-partners.show');
     Route::post('/t/{slug}/channel-partners/{channelPartner}/reset-password', [TenantController::class, 'resetCpPassword'])->name('tenant.channel-partners.reset-password');
+    Route::post('/t/{slug}/channel-partners/{channelPartner}/inactive', [TenantController::class, 'cpSetInactive'])->name('tenant.channel-partners.inactive');
+    Route::delete('/t/{slug}/channel-partners/{channelPartner}', [TenantController::class, 'cpDelete'])->name('tenant.channel-partners.delete');
+    Route::get('/t/{slug}/leads/{lead}/visit-photo', [TenantController::class, 'leadVisitPhoto'])->name('tenant.leads.visit-photo');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/approve', [TenantController::class, 'cpApplicationApprove'])->name('tenant.cp-applications.approve');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/reject', [TenantController::class, 'cpApplicationReject'])->name('tenant.cp-applications.reject');
     Route::post('/t/{slug}/cp-applications/{cpApplication}/assign-manager', [TenantController::class, 'cpApplicationAssignManager'])->name('tenant.cp-applications.assign-manager');

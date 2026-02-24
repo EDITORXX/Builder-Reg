@@ -14,7 +14,7 @@
         </dl>
         <dl class="profile-row">
             <dt>Role</dt>
-            <dd>{{ str_replace('_', ' ', ucfirst($user->role ?? '—')) }}</dd>
+            <dd>{{ $user->getRoleLabel() }}</dd>
         </dl>
         @if(isset($tenant) && $tenant)
         <dl class="profile-row">
