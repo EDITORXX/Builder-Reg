@@ -23,7 +23,12 @@
         <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}" id="sidebar">
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
-                    <img src="{{ $tenant_logo_url }}" alt="Logo" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
+                    @php
+                        $logo_src = (str_starts_with($tenant_logo_url, 'http://') || str_starts_with($tenant_logo_url, 'https://'))
+                            ? $tenant_logo_url
+                            : asset('storage/' . ltrim($tenant_logo_url, '/'));
+                    @endphp
+                    <img src="{{ $logo_src }}" alt="{{ optional($tenant)->name ?? 'Logo' }}" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
                 @else
                     <span class="sidebar-brand-icon">BP</span>
                 @endif
@@ -31,8 +36,8 @@
             </div>
             @if(isset($navUser) && $navUser)
             <div class="sidebar-user" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem;">
-                <div style="font-weight: 600; color: var(--text-primary);">{{ $navUser->name }}</div>
-                <div style="color: var(--text-secondary); margin-top: 0.125rem;">{{ $navUser->getRoleLabel() }}</div>
+                <div style="font-weight: 600; color: #fff;">{{ $navUser->name }}</div>
+                <div style="color: rgba(255,255,255,0.9); margin-top: 0.125rem;">{{ $navUser->getRoleLabel() }}</div>
             </div>
             @endif
             <nav class="sidebar-nav">
