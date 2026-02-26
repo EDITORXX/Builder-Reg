@@ -14,6 +14,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call(PlanSeeder::class);
 
+        // Localhost sample data: php artisan db:seed --class=EldecoSampleSeeder
+
         $superAdmin = User::create([
             'name' => 'Super Admin',
             'email' => 'super@builder.com',

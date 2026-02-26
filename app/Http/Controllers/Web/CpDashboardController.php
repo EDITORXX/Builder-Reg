@@ -39,7 +39,7 @@ class CpDashboardController extends Controller
         }
         $cp = $user->channelPartner;
         $leads = $cp
-            ? Lead::with(['project', 'customer'])->where('channel_partner_id', $cp->id)->orderByDesc('created_at')->paginate(20)
+            ? Lead::with(['project.builderFirm', 'customer'])->where('channel_partner_id', $cp->id)->orderByDesc('created_at')->paginate(20)
             : collect()->paginate(20);
         return view('cp.leads', [
             'user' => $user,

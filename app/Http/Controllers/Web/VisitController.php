@@ -51,6 +51,13 @@ class VisitController extends Controller
         Gate::forUser(session('user'))->authorize('update', $visit);
         $validated = $request->validate(['scheduled_at' => 'required|date']);
         $visit->update(['scheduled_at' => $validated['scheduled_at'], 'status' => Visit::STATUS_RESCHEDULED]);
+        LeadActivity::create([
+            'lead_id' => $visit->lead_id,
+            'created_by' => session('user')->id,
+            'type' => 'visit_rescheduled',
+            'payload' => ['scheduled_at' => $validated['scheduled_at']],
+            'created_at' => now(),
+        ]);
         return redirect()->route('tenant.visits.index', $slug)->with('success', 'Visit rescheduled.');
     }
 
@@ -63,6 +70,13 @@ class VisitController extends Controller
         Gate::forUser(session('user'))->authorize('update', $visit);
         $validated = $request->validate(['reason' => 'nullable|string|max:500']);
         $visit->update(['status' => Visit::STATUS_CANCELLED, 'notes' => $validated['reason'] ?? null]);
+        LeadActivity::create([
+            'lead_id' => $visit->lead_id,
+            'created_by' => session('user')->id,
+            'type' => 'visit_cancelled',
+            'payload' => ['reason' => $validated['reason'] ?? null],
+            'created_at' => now(),
+        ]);
         return redirect()->route('tenant.visits.index', $slug)->with('success', 'Visit cancelled.');
     }
 

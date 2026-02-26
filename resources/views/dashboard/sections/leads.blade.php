@@ -15,6 +15,7 @@
                             <th style="padding: 0.5rem 0;">CP</th>
                             <th style="padding: 0.5rem 0;">Status</th>
                             <th style="padding: 0.5rem 0;">Created</th>
+                            <th style="padding: 0.5rem 0;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -25,6 +26,9 @@
                                 <td style="padding: 0.5rem 0;">{{ $lead->channelPartner?->user?->name ?? $lead->channelPartner?->firm_name ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->sales_status ?? '—') }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $lead->created_at?->format('M j, Y') ?? '—' }}</td>
+                                <td style="padding: 0.5rem 0;">
+                                    <a href="{{ route('tenant.leads.show', [$tenant->slug, $lead]) }}" style="font-size: 0.875rem;">View</a>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

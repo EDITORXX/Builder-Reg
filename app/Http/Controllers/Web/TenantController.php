@@ -10,6 +10,7 @@ use App\Models\CpApplication;
 use App\Models\Form;
 use App\Models\FormField;
 use App\Models\Lead;
+use App\Models\LeadActivity;
 use App\Models\Plan;
 use App\Models\Project;
 use App\Models\User;
@@ -780,6 +781,143 @@ class TenantController extends Controller
         }
         return redirect()->route('tenant.cp-applications.index', ['slug' => $slug, 'status' => 'approved'])
             ->with('success', 'Channel partner account removed. They can no longer log in.');
+    }
+
+    public function leadShow(string $slug, Lead $lead): View|RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403, 'You do not have access to this tenant.');
+        }
+        $lead->load([
+            'customer',
+            'project.builderFirm',
+            'channelPartner.user',
+            'visits.confirmedBy',
+            'visitCheckIns.visitSchedule',
+            'visitCheckIns.channelPartner.user',
+            'visitCheckIns.verifiedBy',
+            'leadActivities.createdBy',
+        ]);
+        if (! $lead->project || (int) $lead->project->builder_firm_id !== (int) $builder->id) {
+            abort(404, 'Lead not found for this tenant.');
+        }
+        if ($user->isChannelPartner()) {
+            $cp = $user->channelPartner;
+            if (! $cp || (int) $lead->channel_partner_id !== (int) $cp->id) {
+                abort(403, 'You can only view your own leads.');
+            }
+        }
+
+        $timeline = $this->buildLeadTimeline($lead);
+        $visitTypeLabel = $this->getLeadVisitTypeLabel($lead);
+
+        return view('dashboard.lead_detail', [
+            'user' => $user,
+            'tenant' => $builder,
+            'lead' => $lead,
+            'timeline' => $timeline,
+            'visitTypeLabel' => $visitTypeLabel,
+        ]);
+    }
+
+    private function getLeadVisitTypeLabel(Lead $lead): string
+    {
+        $firstCheckIn = $lead->visitCheckIns->sortBy('submitted_at')->first();
+        if ($firstCheckIn) {
+            return $firstCheckIn->visit_type === VisitCheckIn::TYPE_SCHEDULED_CHECKIN
+                ? 'Scheduled (QR)'
+                : 'Direct (site form)';
+        }
+        $firstVisit = $lead->visits->sortBy('scheduled_at')->first();
+        if ($firstVisit) {
+            return 'Scheduled (QR)';
+        }
+        return '—';
+    }
+
+    private function buildLeadTimeline(Lead $lead): array
+    {
+        $entries = [];
+
+        foreach ($lead->visits as $visit) {
+            $at = $visit->scheduled_at ?? $visit->created_at;
+            if (! $at) {
+                continue;
+            }
+            $label = match ($visit->status) {
+                Visit::STATUS_SCHEDULED => 'Visit scheduled',
+                Visit::STATUS_CONFIRMED => 'Visit confirmed',
+                Visit::STATUS_CANCELLED => 'Visit cancelled',
+                Visit::STATUS_RESCHEDULED => 'Visit rescheduled',
+                Visit::STATUS_MISSED => 'Visit missed',
+                default => 'Visit (' . $visit->status . ')',
+            };
+            $actor = $visit->confirmedBy?->name ?? $lead->channelPartner?->user?->name ?? $lead->channelPartner?->firm_name ?? '—';
+            $entries[] = [
+                'sort_at' => $at->format('Y-m-d H:i:s'),
+                'date' => $at,
+                'type' => 'visit',
+                'label' => $label,
+                'actor' => $actor,
+            ];
+        }
+
+        foreach ($lead->visitCheckIns as $checkIn) {
+            $at = $checkIn->submitted_at ?? $checkIn->created_at ?? null;
+            if (! $at) {
+                continue;
+            }
+            $typeLabel = $checkIn->visit_type === VisitCheckIn::TYPE_SCHEDULED_CHECKIN ? 'Scheduled' : 'Direct';
+            $label = 'Check-in submitted (' . $typeLabel . ', site ' . ($checkIn->visit_type === VisitCheckIn::TYPE_DIRECT ? 'form' : 'QR') . ')';
+            if ($checkIn->verification_status === VisitCheckIn::VERIFICATION_VERIFIED) {
+                $entries[] = [
+                    'sort_at' => ($checkIn->verified_at ?? $checkIn->submitted_at)->format('Y-m-d H:i:s'),
+                    'date' => $checkIn->verified_at ?? $checkIn->submitted_at,
+                    'type' => 'checkin',
+                    'label' => 'Visit verified (' . $typeLabel . ')',
+                    'actor' => $checkIn->verifiedBy?->name ?? '—',
+                ];
+            }
+            $cpName = $checkIn->channelPartner?->user?->name ?? $checkIn->channelPartner?->firm_name ?? '—';
+            $entries[] = [
+                'sort_at' => $at->format('Y-m-d H:i:s'),
+                'date' => $at,
+                'type' => 'checkin',
+                'label' => $label,
+                'actor' => 'CP: ' . $cpName,
+            ];
+        }
+
+        foreach ($lead->leadActivities as $activity) {
+            $at = $activity->created_at;
+            $label = match ($activity->type) {
+                'lead_created' => 'Lead created',
+                'visit_scheduled' => 'Visit scheduled',
+                'visit_confirmed' => 'Visit confirmed',
+                'visit_cancelled' => 'Visit cancelled',
+                'visit_rescheduled' => 'Visit rescheduled',
+                'lock_created' => 'Lock created',
+                'status_changed' => 'Status changed',
+                'sales_status_changed' => 'Sales status changed',
+                default => str_replace('_', ' ', ucfirst($activity->type)),
+            };
+            $entries[] = [
+                'sort_at' => $at->format('Y-m-d H:i:s'),
+                'date' => $at,
+                'type' => 'activity',
+                'label' => $label,
+                'actor' => $activity->createdBy?->name ?? '—',
+            ];
+        }
+
+        usort($entries, fn ($a, $b) => strcmp($b['sort_at'], $a['sort_at']));
+
+        return array_slice($entries, 0, 50);
     }
 
     public function leadVisitPhoto(string $slug, Lead $lead): StreamedResponse|RedirectResponse

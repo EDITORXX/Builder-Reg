@@ -99,6 +99,7 @@ Route::middleware('auth_web')->group(function () {
     Route::put('/t/{slug}/projects/{project}', [TenantController::class, 'projectUpdate'])->name('tenant.projects.update');
     Route::delete('/t/{slug}/projects/{project}', [TenantController::class, 'projectDestroy'])->name('tenant.projects.destroy');
     Route::get('/t/{slug}/leads', [TenantController::class, 'showSection'])->defaults('section', 'leads')->name('tenant.leads.index');
+    Route::get('/t/{slug}/leads/{lead}', [TenantController::class, 'leadShow'])->name('tenant.leads.show');
     Route::get('/t/{slug}/cp-applications', [TenantController::class, 'showSection'])->defaults('section', 'cp-applications')->name('tenant.cp-applications.index');
     Route::get('/t/{slug}/channel-partners/{channelPartner}', [TenantController::class, 'channelPartnerShow'])->name('tenant.channel-partners.show');
     Route::post('/t/{slug}/channel-partners/{channelPartner}/reset-password', [TenantController::class, 'resetCpPassword'])->name('tenant.channel-partners.reset-password');

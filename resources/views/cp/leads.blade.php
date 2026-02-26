@@ -21,6 +21,7 @@
                                 <th style="padding: 0.5rem 0;">Project</th>
                                 <th style="padding: 0.5rem 0;">Status</th>
                                 <th style="padding: 0.5rem 0;">Created</th>
+                                <th style="padding: 0.5rem 0;">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -30,6 +31,13 @@
                                     <td style="padding: 0.5rem 0;">{{ $lead->project?->name ?? '—' }}</td>
                                     <td style="padding: 0.5rem 0;">{{ str_replace('_', ' ', $lead->sales_status ?? '—') }}</td>
                                     <td style="padding: 0.5rem 0;">{{ $lead->created_at?->format('M j, Y') ?? '—' }}</td>
+                                    <td style="padding: 0.5rem 0;">
+                                        @if($lead->project?->builderFirm?->slug)
+                                            <a href="{{ route('tenant.leads.show', [$lead->project->builderFirm->slug, $lead]) }}" style="font-size: 0.875rem;">View</a>
+                                        @else
+                                            —
+                                        @endif
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
