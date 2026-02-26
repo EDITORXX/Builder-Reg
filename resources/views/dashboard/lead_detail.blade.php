@@ -25,6 +25,10 @@
         @endif
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success" style="margin-bottom: 1.5rem;">{{ session('success') }}</div>
+    @endif
+
     <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-body">
             <div style="display: flex; align-items: flex-start; gap: 1rem; flex-wrap: wrap;">
@@ -60,6 +64,30 @@
             </dl>
         </div>
     </div>
+
+    @if($canUpdateSalesStatus ?? false)
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header">
+                <h2 class="card-title">Sales status</h2>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ route('tenant.leads.update-sales-status', [$tenant->slug, $lead]) }}">
+                    @csrf
+                    <div style="margin-bottom: 0.75rem;">
+                        <label for="sales_status" style="display: block; font-size: 0.875rem; margin-bottom: 0.25rem;">Status</label>
+                        <select name="sales_status" id="sales_status" style="padding: 0.35rem 0.5rem; font-size: 0.875rem; min-width: 10rem;">
+                            <option value="new" {{ ($lead->sales_status ?? '') === 'new' ? 'selected' : '' }}>New</option>
+                            <option value="negotiation" {{ ($lead->sales_status ?? '') === 'negotiation' ? 'selected' : '' }}>Negotiation</option>
+                            <option value="hold" {{ ($lead->sales_status ?? '') === 'hold' ? 'selected' : '' }}>Hold</option>
+                            <option value="booked" {{ ($lead->sales_status ?? '') === 'booked' ? 'selected' : '' }}>Booked</option>
+                            <option value="lost" {{ ($lead->sales_status ?? '') === 'lost' ? 'selected' : '' }}>Lost</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary" style="padding: 0.5rem 1rem; font-size: 0.875rem;">Update status</button>
+                </form>
+            </div>
+        </div>
+    @endif
 
     <div class="card" style="margin-bottom: 1.5rem;">
         <div class="card-header">

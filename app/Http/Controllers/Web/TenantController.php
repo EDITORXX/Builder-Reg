@@ -26,6 +26,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -815,6 +816,7 @@ class TenantController extends Controller
 
         $timeline = $this->buildLeadTimeline($lead);
         $visitTypeLabel = $this->getLeadVisitTypeLabel($lead);
+        $canUpdateSalesStatus = Gate::forUser($user)->allows('updateSalesStatus', $lead);
 
         return view('dashboard.lead_detail', [
             'user' => $user,
@@ -822,7 +824,48 @@ class TenantController extends Controller
             'lead' => $lead,
             'timeline' => $timeline,
             'visitTypeLabel' => $visitTypeLabel,
+            'canUpdateSalesStatus' => $canUpdateSalesStatus,
         ]);
+    }
+
+    public function updateLeadSalesStatus(string $slug, Lead $lead, Request $request): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
+            abort(403, 'You do not have access to this tenant.');
+        }
+        if (! $lead->project || (int) $lead->project->builder_firm_id !== (int) $builder->id) {
+            abort(404, 'Lead not found for this tenant.');
+        }
+        if ($user->isChannelPartner()) {
+            $cp = $user->channelPartner;
+            if (! $cp || (int) $lead->channel_partner_id !== (int) $cp->id) {
+                abort(403, 'You can only update your own leads.');
+            }
+        }
+        if (! Gate::forUser($user)->allows('updateSalesStatus', $lead)) {
+            abort(403, 'You cannot update sales status for this lead.');
+        }
+
+        $validated = $request->validate([
+            'sales_status' => 'required|in:new,negotiation,hold,booked,lost',
+        ]);
+
+        $oldStatus = $lead->sales_status;
+        $lead->update(['sales_status' => $validated['sales_status']]);
+
+        LeadActivity::create([
+            'lead_id' => $lead->id,
+            'created_by' => $user->id,
+            'type' => 'sales_status_changed',
+            'payload' => ['from' => $oldStatus, 'to' => $validated['sales_status']],
+        ]);
+
+        return redirect()->route('tenant.leads.show', [$slug, $lead])->with('success', 'Sales status updated.');
     }
 
     private function getLeadVisitTypeLabel(Lead $lead): string

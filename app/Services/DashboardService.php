@@ -13,14 +13,22 @@ class DashboardService
     /**
      * Platform-level stats for Super Admin dashboard.
      *
-     * @return array{total_tenants: int, active_tenants: int, total_plans: int}
+     * @return array{total_tenants: int, active_tenants: int, total_plans: int, leads_by_status: \Illuminate\Support\Collection}
      */
     public function getSuperAdminStats(): array
     {
+        $byStatus = Lead::query()
+            ->whereHas('project')
+            ->selectRaw('sales_status, count(*) as total')
+            ->groupBy('sales_status')
+            ->get()
+            ->keyBy('sales_status');
+
         return [
             'total_tenants' => BuilderFirm::count(),
             'active_tenants' => BuilderFirm::where('is_active', true)->count(),
             'total_plans' => Plan::count(),
+            'leads_by_status' => $byStatus,
         ];
     }
 

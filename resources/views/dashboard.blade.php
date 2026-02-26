@@ -75,6 +75,25 @@
                     <div class="stat-value">{{ $stats['total_plans'] ?? 0 }}</div>
                 </div>
             </div>
+            <h3 style="font-size: 1rem; margin: 0 0 0.75rem 0;">Leads by sales status (all tenants)</h3>
+            <div class="stat-grid" style="margin-bottom: 1rem;">
+                @php
+                    $statusLabels = [
+                        'new' => 'New',
+                        'negotiation' => 'Negotiation',
+                        'hold' => 'Hold',
+                        'booked' => 'Booked',
+                        'lost' => 'Lost',
+                    ];
+                    $leadsByStatus = $stats['leads_by_status'] ?? collect();
+                @endphp
+                @foreach($statusLabels as $key => $label)
+                <div class="stat-card">
+                    <div class="stat-label">{{ $label }}</div>
+                    <div class="stat-value" style="font-size:1.125rem;">{{ $leadsByStatus->get($key)?->total ?? 0 }}</div>
+                </div>
+                @endforeach
+            </div>
             <p style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">
                 <a href="{{ route('tenants.create') }}">New tenant</a> ·
                 <a href="{{ route('tenants.index') }}">Tenants</a> ·
