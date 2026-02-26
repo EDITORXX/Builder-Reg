@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\View\View;
 
@@ -73,5 +74,31 @@ class ProfileController extends Controller
         session(['user' => $user->load('builderFirm', 'channelPartner')]);
 
         return redirect()->route('profile.show')->with('success', 'Password updated.');
+    }
+
+    public function updateAvatar(Request $request): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+
+        $user = session('user');
+        $user->refresh();
+
+        $request->validate([
+            'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+        ]);
+
+        $file = $request->file('avatar');
+        $path = $file->store('avatars', 'public');
+
+        if ($user->avatar && Storage::disk('public')->exists($user->avatar)) {
+            Storage::disk('public')->delete($user->avatar);
+        }
+
+        $user->update(['avatar' => $path]);
+        session(['user' => $user->load('builderFirm', 'channelPartner')]);
+
+        return redirect()->route('profile.show')->with('success', 'Profile picture updated.');
     }
 }

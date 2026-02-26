@@ -39,9 +39,16 @@
                 <span class="sidebar-brand-text">{{ optional($tenant)->name ?? 'Builder Partner' }}</span>
             </div>
             @if(isset($navUser) && $navUser)
-            <div class="sidebar-user" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem;">
-                <div style="font-weight: 600; color: #fff;">{{ $navUser->name }}</div>
-                <div style="color: rgba(255,255,255,0.9); margin-top: 0.125rem;">{{ $navUser->getRoleLabel() }}</div>
+            <div class="sidebar-user" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
+                @if($navUser->avatar_url ?? null)
+                    <img src="{{ $navUser->avatar_url }}" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                @else
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; flex-shrink: 0;">{{ strtoupper(substr($navUser->name ?? 'U', 0, 1)) }}</div>
+                @endif
+                <div style="min-width: 0;">
+                    <div style="font-weight: 600; color: #fff;">{{ $navUser->name }}</div>
+                    <div style="color: rgba(255,255,255,0.9); margin-top: 0.125rem;">{{ $navUser->getRoleLabel() }}</div>
+                </div>
             </div>
             @endif
             <nav class="sidebar-nav">

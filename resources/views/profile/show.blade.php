@@ -14,6 +14,17 @@
             <h2 class="card-title">My details</h2>
         </div>
         <div class="card-body">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                @if($user->avatar_url)
+                    <img src="{{ $user->avatar_url }}" alt="Profile" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--border);">
+                @else
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--tenant-primary, #0f766e); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600;">{{ strtoupper(substr($user->name ?? 'U', 0, 1)) }}</div>
+                @endif
+                <div>
+                    <strong>{{ $user->name ?? '—' }}</strong>
+                    <p style="margin: 0.25rem 0 0; font-size: 0.875rem; color: var(--text-secondary);">{{ $user->getRoleLabel() }}</p>
+                </div>
+            </div>
             <dl class="profile-row">
                 <dt>Name</dt>
                 <dd>{{ $user->name ?? '—' }}</dd>
@@ -50,6 +61,26 @@
             </dl>
             @endif
             @endif
+        </div>
+    </div>
+
+    <div class="card" style="margin-bottom: 1.5rem; max-width: 32rem;">
+        <div class="card-header">
+            <h2 class="card-title">Profile picture</h2>
+            <p class="card-subtitle" style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">Upload a photo (JPEG, PNG, GIF, max 2MB).</p>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ route('profile.avatar') }}" class="login-form" enctype="multipart/form-data">
+                @csrf
+                <div class="field">
+                    <label for="avatar">Choose image</label>
+                    <input id="avatar" type="file" name="avatar" accept="image/jpeg,image/png,image/jpg,image/gif">
+                    @error('avatar')
+                        <p class="login-error">{{ $message }}</p>
+                    @enderror
+                </div>
+                <button type="submit" class="btn-primary">Update picture</button>
+            </form>
         </div>
     </div>
 

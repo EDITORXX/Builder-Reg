@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'phone',
+        'avatar',
         'password',
         'role',
         'builder_firm_id',
@@ -90,6 +91,19 @@ class User extends Authenticatable
             return false;
         }
         return (int) $this->builder_firm_id === (int) $builderFirmId;
+    }
+
+    /** Full URL for profile picture, or null if not set. */
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (empty($this->avatar)) {
+            return null;
+        }
+        $path = ltrim($this->avatar, '/');
+        if (strpos($path, 'http') === 0) {
+            return $path;
+        }
+        return asset('storage/' . $path);
     }
 
     /** Human-readable role label for UI (e.g. SaaS Admin, Builder Admin, Channel Partner). */

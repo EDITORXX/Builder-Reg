@@ -60,6 +60,7 @@ Route::middleware('auth_web')->group(function () {
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/avatar', [ProfileController::class, 'updateAvatar'])->name('profile.avatar');
 
     Route::get('/cp/dashboard', [CpDashboardController::class, 'dashboard'])->name('cp.dashboard');
     Route::get('/cp/leads', [CpDashboardController::class, 'leads'])->name('cp.leads');
