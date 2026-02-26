@@ -260,7 +260,24 @@ class TenantController extends Controller
         ];
 
         if ($section === 'projects') {
-            $data['projects'] = $builder->projects()->orderBy('name')->get();
+            if ($user->isManager()) {
+                $assignedCpIds = CpApplication::where('builder_firm_id', $builder->id)
+                    ->where('manager_id', $user->id)
+                    ->where('status', CpApplication::STATUS_APPROVED)
+                    ->pluck('channel_partner_id')
+                    ->all();
+                if ($assignedCpIds === []) {
+                    $data['projects'] = collect();
+                } else {
+                    $data['projects'] = Project::where('builder_firm_id', $builder->id)
+                        ->whereHas('leads', fn ($q) => $q->whereIn('channel_partner_id', $assignedCpIds))
+                        ->orderBy('name')
+                        ->get();
+                }
+                $data['managerProjectsViewOnly'] = true;
+            } else {
+                $data['projects'] = $builder->projects()->orderBy('name')->get();
+            }
         }
         if ($section === 'leads') {
             $data['leads'] = Lead::with(['project', 'customer', 'channelPartner.user'])
@@ -548,6 +565,9 @@ class TenantController extends Controller
         if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
             abort(403);
         }
+        if ($user->isManager()) {
+            abort(403, 'Managers cannot add projects. View only.');
+        }
         if ($builder->projects()->count() >= $builder->getMaxProjects()) {
             return redirect()->route('tenant.projects.index', $slug)
                 ->with('error', 'Project limit reached for your plan.');
@@ -605,6 +625,9 @@ class TenantController extends Controller
         }
         if ((int) $project->builder_firm_id !== (int) $builder->id) {
             abort(404);
+        }
+        if ($user->isManager()) {
+            abort(403, 'Managers cannot delete projects. View only.');
         }
         $project->delete();
         return redirect()->route('tenant.projects.index', $slug)->with('success', 'Project deleted.');

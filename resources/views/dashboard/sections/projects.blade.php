@@ -10,6 +10,7 @@
             <p style="margin: 0 0 1rem 0; color: var(--error);">{{ session('error') }}</p>
         @endif
 
+        @if(empty($managerProjectsViewOnly))
         <form method="POST" action="{{ route('tenant.projects.store', $tenant->slug) }}" style="margin-bottom: 1.5rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: flex-end;">
             @csrf
             <div style="min-width: 180px;">
@@ -28,9 +29,10 @@
             </div>
             <button type="submit" class="btn-primary">Add project</button>
         </form>
+        @endif
 
         @if($projects->isEmpty())
-            <p style="margin: 0; color: var(--text-secondary);">No projects yet. Add one above.</p>
+            <p style="margin: 0; color: var(--text-secondary);">No projects yet.@if(empty($managerProjectsViewOnly)) Add one above.@endif</p>
         @else
             <div style="overflow-x: auto;">
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.875rem;">
@@ -39,17 +41,26 @@
                             <th style="padding: 0.5rem 0;">Name</th>
                             <th style="padding: 0.5rem 0;">Location</th>
                             <th style="padding: 0.5rem 0;">Status</th>
+                            <th style="padding: 0.5rem 0;">Lock days</th>
+                            @if(empty($managerProjectsViewOnly))
                             <th style="padding: 0.5rem 0;">Actions</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($projects as $project)
+                            @php
+                                $lockDays = $project->lock_days_override ?? ($tenant->default_lock_days ?? 30);
+                                $lockDaysLabel = $lockDays . ' days' . ($project->lock_days_override ? '' : ' (default)');
+                            @endphp
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 0.5rem 0;">{{ $project->name }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $project->location ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">
                                     <span style="font-size: 0.8125rem;">{{ $project->status }}</span>
                                 </td>
+                                <td style="padding: 0.5rem 0;">{{ $lockDaysLabel }}</td>
+                                @if(empty($managerProjectsViewOnly))
                                 <td style="padding: 0.5rem 0;">
                                     <a href="{{ route('tenant.projects.edit', [$tenant->slug, $project]) }}" style="font-size: 0.8125rem; margin-right: 0.5rem;">Edit</a>
                                     <form method="POST" action="{{ route('tenant.projects.update', [$tenant->slug, $project]) }}" style="display: inline-block; margin-right: 0.5rem;">
@@ -66,6 +77,7 @@
                                         <button type="submit" style="font-size: 0.8125rem; background: none; border: none; cursor: pointer; color: var(--error);">Delete</button>
                                     </form>
                                 </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>
