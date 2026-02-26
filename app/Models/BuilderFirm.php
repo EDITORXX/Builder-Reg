@@ -154,4 +154,10 @@ class BuilderFirm extends Model
         $name = $this->settings['mail_from_name'] ?? null;
         return $name !== null && $name !== '' ? (string) $name : ($this->name ?? config('mail.from.name', 'Builder'));
     }
+
+    /** Whether managers can approve/reject CP applications and manage CPs (Inactive, Delete, Reset password). */
+    public function getManagersCanApproveCp(): bool
+    {
+        return (bool) ($this->settings['managers_can_approve_cp'] ?? false);
+    }
 }

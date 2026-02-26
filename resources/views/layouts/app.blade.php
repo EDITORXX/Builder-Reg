@@ -80,6 +80,20 @@
                 @yield('content')
             </div>
         </main>
+        @if(isset($navItems) && count($navItems) > 0)
+        <nav class="bottom-nav" aria-label="Main">
+            @foreach($navItems as $item)
+            <a href="{{ $item['url'] }}" class="bottom-nav-link {{ request()->routeIs($item['route']) ? 'bottom-nav-link-active' : '' }}" title="{{ $item['label'] }}">
+                @include('partials.sidebar-icon', ['name' => $item['icon']])
+                <span class="bottom-nav-label">{{ $item['label'] }}</span>
+            </a>
+            @endforeach
+            <button type="button" class="bottom-nav-link" id="bottom-nav-menu-btn" aria-label="Menu" title="Menu (Log out, Icons only)">
+                <svg class="sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"></path></svg>
+                <span class="bottom-nav-label">Menu</span>
+            </button>
+        </nav>
+        @endif
     </div>
     <script>
 (function () {
@@ -108,6 +122,10 @@
         sidebar.addEventListener('click', function (e) {
             if (e.target.closest('a') || e.target.closest('button')) closeSidebar();
         });
+    }
+    var bottomMenuBtn = document.getElementById('bottom-nav-menu-btn');
+    if (bottomMenuBtn && btn) {
+        bottomMenuBtn.addEventListener('click', function () { btn.click(); });
     }
 })();
     </script>

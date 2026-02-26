@@ -271,15 +271,33 @@ class TenantController extends Controller
         if ($section === 'cp-applications') {
             try {
                 $query = $builder->cpApplications()->with(['channelPartner.user', 'manager'])->latest();
+                $managerRestricted = $user->isManager() && ! $user->isSuperAdmin() && ! $user->isBuilderAdmin();
+                if ($managerRestricted) {
+                    $query->where('manager_id', $user->id);
+                }
                 if (request()->filled('status')) {
                     $query->where('status', request('status'));
                 }
                 $data['cpApplications'] = $query->paginate(20)->withQueryString();
                 $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->where('is_active', true)->orderBy('name')->get();
+                $data['managerRestricted'] = $managerRestricted;
+                $data['managersCanApproveCp'] = $builder->getManagersCanApproveCp();
+                if ($managerRestricted) {
+                    $counts = $builder->cpApplications()->where('manager_id', $user->id)
+                        ->selectRaw('status, count(*) as total')
+                        ->groupBy('status')
+                        ->get()
+                        ->keyBy('status');
+                    $data['stats']['cp_applications_pending_count'] = (int) ($counts->get(CpApplication::STATUS_PENDING)?->total ?? 0);
+                    $data['stats']['cp_applications_approved_count'] = (int) ($counts->get(CpApplication::STATUS_APPROVED)?->total ?? 0);
+                    $data['stats']['cp_applications_rejected_count'] = (int) ($counts->get(CpApplication::STATUS_REJECTED)?->total ?? 0);
+                }
             } catch (\Throwable $e) {
                 Log::warning('TenantController cp-applications section failed: '.$e->getMessage(), ['slug' => $slug, 'exception' => $e]);
                 $data['cpApplications'] = new LengthAwarePaginator(collect(), 0, 20, 1, ['path' => request()->url(), 'query' => request()->query()]);
                 $data['managers'] = collect();
+                $data['managerRestricted'] = false;
+                $data['managersCanApproveCp'] = false;
             }
         }
         if ($section === 'managers') {
@@ -301,10 +319,30 @@ class TenantController extends Controller
             $data['canSendOtp'] = in_array($user->role ?? '', ['manager', 'sales_exec'], true);
         }
         if ($section === 'locks') {
-            $data['projects'] = $builder->projects()->orderBy('name')->get();
             $filters = request()->only(['project_id']);
             $builderFirmId = $user->isSuperAdmin() ? null : (int) $builder->id;
-            $data['locks'] = $reportService->locksReport($builderFirmId, $filters);
+            if ($user->isManager()) {
+                $assignedCpIds = CpApplication::where('builder_firm_id', $builder->id)
+                    ->where('manager_id', $user->id)
+                    ->where('status', CpApplication::STATUS_APPROVED)
+                    ->pluck('channel_partner_id')
+                    ->all();
+                if ($assignedCpIds === []) {
+                    $data['projects'] = collect();
+                    $data['locks'] = collect();
+                } else {
+                    $data['projects'] = Project::where('builder_firm_id', $builder->id)
+                        ->whereHas('leads', fn ($q) => $q->whereIn('channel_partner_id', $assignedCpIds))
+                        ->orderBy('name')
+                        ->get();
+                    $allLocks = $reportService->locksReport($builderFirmId, $filters);
+                    $data['locks'] = $allLocks->filter(fn ($lock) => in_array((int) $lock->channel_partner_id, array_map('intval', $assignedCpIds), true));
+                }
+                $data['managerLocksViewOnly'] = true;
+            } else {
+                $data['projects'] = $builder->projects()->orderBy('name')->get();
+                $data['locks'] = $reportService->locksReport($builderFirmId, $filters);
+            }
         }
         if ($section === 'reports') {
             $data['projects'] = $builder->projects()->orderBy('name')->get();
@@ -371,6 +409,7 @@ class TenantController extends Controller
             'default_lock_days' => 'nullable|integer|min:1|max:365',
             'mail_from_address' => 'nullable|email|max:255',
             'mail_from_name' => 'nullable|string|max:100',
+            'managers_can_approve_cp' => 'nullable|boolean',
             'registration_bg' => [
                 'nullable',
                 'string',
@@ -460,6 +499,9 @@ class TenantController extends Controller
         if (array_key_exists('mail_from_name', $validated)) {
             $settings['mail_from_name'] = $validated['mail_from_name'] ?: null;
         }
+        if ($user->isSuperAdmin() || $user->isBuilderAdmin()) {
+            $settings['managers_can_approve_cp'] = $request->boolean('managers_can_approve_cp');
+        }
         foreach (['registration_bg', 'registration_card_bg', 'registration_title_color', 'registration_text_color', 'registration_subtitle_color'] as $key) {
             if (array_key_exists($key, $validated)) {
                 $settings[$key] = $validated[$key] !== null && $validated[$key] !== '' ? $validated[$key] : null;
@@ -485,6 +527,9 @@ class TenantController extends Controller
         }
         if ((int) $project->builder_firm_id !== (int) $builder->id) {
             abort(404);
+        }
+        if ($user->isManager()) {
+            abort(403, 'Managers cannot edit project lock settings. View only.');
         }
         return view('dashboard.project-edit', [
             'user' => $user,
@@ -532,6 +577,9 @@ class TenantController extends Controller
         if ((int) $project->builder_firm_id !== (int) $builder->id) {
             abort(404);
         }
+        if ($user->isManager()) {
+            abort(403, 'Managers cannot edit project lock settings. View only.');
+        }
         $request->merge([
             'lock_days_override' => $request->filled('lock_days_override') ? (int) $request->lock_days_override : null,
         ]);
@@ -577,6 +625,9 @@ class TenantController extends Controller
             ->first();
         if (! $cpApplication) {
             abort(404, 'This channel partner has no application with this builder.');
+        }
+        if ($user->isManager() && (int) ($cpApplication->manager_id ?? 0) !== (int) $user->id) {
+            abort(403, 'You can only view channel partners assigned to you.');
         }
         $channelPartner->load('user');
         $leads = Lead::with(['customer', 'project'])
@@ -625,6 +676,9 @@ class TenantController extends Controller
         if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
             abort(403, 'You do not have access to this tenant.');
         }
+        if ($user->isManager() && ! $builder->getManagersCanApproveCp()) {
+            abort(403, 'Managers cannot reset CP password unless allowed by Builder Admin.');
+        }
         $cpApplication = CpApplication::where('builder_firm_id', $builder->id)
             ->where('channel_partner_id', $channelPartner->id)
             ->first();
@@ -657,6 +711,9 @@ class TenantController extends Controller
         if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
             abort(403, 'You do not have access to this tenant.');
         }
+        if ($user->isManager() && ! $builder->getManagersCanApproveCp()) {
+            abort(403, 'Managers cannot mark CP inactive unless allowed by Builder Admin.');
+        }
         $cpApplication = CpApplication::where('builder_firm_id', $builder->id)
             ->where('channel_partner_id', $channelPartner->id)
             ->first();
@@ -679,8 +736,11 @@ class TenantController extends Controller
         }
         $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
         $user = session('user');
-        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
-            abort(403, 'Only Builder Admin or Super Admin can delete a channel partner.');
+        if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id && ! ($user->isManager() && $builder->getManagersCanApproveCp())) {
+            abort(403, 'Only Builder Admin or Super Admin can delete a channel partner (or Manager when allowed).');
+        }
+        if ($user->isManager() && ! $builder->getManagersCanApproveCp()) {
+            abort(403, 'Managers cannot delete a channel partner unless allowed by Builder Admin.');
         }
         if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
             abort(403);
@@ -744,6 +804,9 @@ class TenantController extends Controller
         if ((int) $cpApplication->builder_firm_id !== (int) $builder->id) {
             abort(404);
         }
+        if ($user->isManager() && ! $builder->getManagersCanApproveCp()) {
+            abort(403, 'Managers cannot approve CP applications unless allowed by Builder Admin.');
+        }
         if ($cpApplication->status !== CpApplication::STATUS_PENDING) {
             return redirect()->route('tenant.cp-applications.index', ['slug' => $slug, 'status' => 'pending'])->with('error', 'Application already processed.');
         }
@@ -777,6 +840,9 @@ class TenantController extends Controller
         }
         if ((int) $cpApplication->builder_firm_id !== (int) $builder->id) {
             abort(404);
+        }
+        if ($user->isManager() && ! $builder->getManagersCanApproveCp()) {
+            abort(403, 'Managers cannot reject CP applications unless allowed by Builder Admin.');
         }
         $validated = $request->validate(['notes' => 'required|string|max:1000']);
         $cpApplication->update([
@@ -913,6 +979,9 @@ class TenantController extends Controller
         $user = session('user');
         if (! $user->isSuperAdmin() && (int) $user->builder_firm_id !== (int) $builder->id) {
             abort(403);
+        }
+        if ($user->isManager()) {
+            abort(403, 'Only Builder Admin or Super Admin can assign a manager to a CP.');
         }
         if ((int) $cpApplication->builder_firm_id !== (int) $builder->id) {
             abort(404);

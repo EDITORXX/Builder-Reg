@@ -122,6 +122,16 @@
                 @enderror
             </div>
 
+            @if(isset($user) && ($user->isSuperAdmin() || $user->isBuilderAdmin()))
+            <div style="margin-bottom: 1rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; cursor: pointer;">
+                    <input type="checkbox" name="managers_can_approve_cp" value="1" {{ old('managers_can_approve_cp', $tenant->getManagersCanApproveCp()) ? 'checked' : '' }} style="width: 1rem; height: 1rem;">
+                    Allow managers to approve/reject CP applications and manage CPs (Inactive, Delete, Reset password)
+                </label>
+                <p style="margin: 0.25rem 0 0; font-size: 0.8125rem; color: var(--text-secondary);">When off, managers only see CPs assigned to them with View detail.</p>
+            </div>
+            @endif
+
             <h3 style="font-size: 1rem; margin: 1.25rem 0 0.75rem 0;">Mail setup</h3>
             <p style="margin: 0 0 0.75rem 0; font-size: 0.875rem; color: var(--text-secondary);">CP ko bhejne wale emails (approve/reject, new customer) is address se jayenge.</p>
             <div style="margin-bottom: 1rem;">

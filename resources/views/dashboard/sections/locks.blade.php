@@ -19,7 +19,9 @@
                         <tr style="border-bottom: 1px solid var(--border); text-align: left;">
                             <th style="padding: 0.5rem 0;">Project</th>
                             <th style="padding: 0.5rem 0;">Lock days</th>
+                            @if(empty($managerLocksViewOnly))
                             <th style="padding: 0.5rem 0;">Action</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -28,9 +30,11 @@
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 0.5rem 0;">{{ $p->name ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $lockDays }} days {{ $p->lock_days_override ? '' : '(default)' }}</td>
+                                @if(empty($managerLocksViewOnly))
                                 <td style="padding: 0.5rem 0;">
                                     <a href="{{ route('tenant.projects.edit', [$tenant->slug, $p]) }}" style="font-size: 0.875rem;">Edit project</a>
                                 </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

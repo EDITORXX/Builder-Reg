@@ -4,6 +4,11 @@
     $pendingCount = $stats['cp_applications_pending_count'] ?? 0;
     $approvedCount = $stats['cp_applications_approved_count'] ?? 0;
     $rejectedCount = $stats['cp_applications_rejected_count'] ?? 0;
+    $managerRestricted = $managerRestricted ?? false;
+    $managersCanApproveCp = $managersCanApproveCp ?? false;
+    $showPendingActions = ! $managerRestricted || $managersCanApproveCp;
+    $showManagerDropdown = ! $managerRestricted && isset($managers) && $managers->isNotEmpty();
+    $showCpActions = ! $managerRestricted || $managersCanApproveCp;
 @endphp
 <div class="card" style="margin-bottom: 1.5rem;">
     <div class="card-header">
@@ -46,7 +51,7 @@
                                 <td style="padding: 0.5rem 0;">{{ $app->channelPartner?->firm_name ?? '—' }}<br><span style="font-size: 0.8125rem; color: var(--text-secondary);">{{ $app->channelPartner?->user?->email ?? '' }}</span></td>
                                 <td style="padding: 0.5rem 0;">{{ $app->status }}</td>
                                 <td style="padding: 0.5rem 0;">
-                                    @if($app->status === 'approved' && isset($managers) && $managers->isNotEmpty())
+                                    @if($app->status === 'approved' && $showManagerDropdown)
                                         <form method="POST" action="{{ route('tenant.cp-applications.assign-manager', [$tenant->slug, $app]) }}" style="display: inline;">
                                             @csrf
                                             <select name="manager_id" onchange="this.form.submit()" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; border-radius: var(--radius); min-width: 120px;">
@@ -62,7 +67,7 @@
                                 </td>
                                 <td style="padding: 0.5rem 0;">{{ $app->created_at?->format('M j, Y') ?? '—' }}</td>
                                 <td style="padding: 0.5rem 0;">
-                                    @if($app->status === 'pending')
+                                    @if($app->status === 'pending' && $showPendingActions)
                                         <form method="POST" action="{{ route('tenant.cp-applications.approve', [$tenant->slug, $app]) }}" style="display: inline-block; margin-right: 0.5rem;">
                                             @csrf
                                             <button type="submit" class="btn-primary" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem;">Approve</button>
@@ -71,10 +76,9 @@
                                             <input type="text" name="notes" placeholder="Rejection reason" required style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; width: 140px; margin-right: 0.25rem;">
                                             <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--error); background: none; border: none; cursor: pointer;">Reject</button>
                                         </form>
-                                    @else
-                                        @if($app->channelPartner)
+                                    @elseif($app->channelPartner)
                                             <a href="{{ route('tenant.channel-partners.show', [$tenant->slug, $app->channelPartner]) }}" class="btn-primary" style="display: inline-block; padding: 0.25rem 0.5rem; font-size: 0.8125rem; text-decoration: none; margin-right: 0.5rem;">View detail</a>
-                                            @if($app->status === 'approved')
+                                            @if($app->status === 'approved' && $showCpActions)
                                                 <form method="POST" action="{{ route('tenant.channel-partners.reset-password', [$tenant->slug, $app->channelPartner]) }}" style="display: inline;" onsubmit="return confirm('Generate a new password for this channel partner? Their current password will stop working. You will see the new password once.');">
                                                     @csrf
                                                     <button type="submit" style="padding: 0.25rem 0.5rem; font-size: 0.8125rem; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-decoration: underline;">Reset password</button>
@@ -92,7 +96,6 @@
                                         @else
                                             —
                                         @endif
-                                    @endif
                                 </td>
                             </tr>
                         @endforeach
