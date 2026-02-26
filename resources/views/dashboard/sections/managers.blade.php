@@ -10,6 +10,18 @@
         @if(session('error'))
             <p style="margin: 0 0 1rem 0; color: var(--error);">{{ session('error') }}</p>
         @endif
+        @if(session('show_manager_password') && session('password_value'))
+            <div class="card password-reveal-card" style="margin-bottom: 1rem; border-color: var(--accent); background: #eff6ff;">
+                <div class="card-body">
+                    <p style="margin: 0 0 0.5rem 0; font-weight: 600;">New password (copy now — won't be shown again)</p>
+                    <p style="margin: 0 0 0.5rem 0; font-size: 0.875rem; color: var(--text-secondary);">{{ session('manager_name') }} — {{ session('manager_email') }}</p>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                        <code id="manager-password-value" style="padding: 0.5rem 0.75rem; background: #fff; border: 1px solid var(--border); border-radius: var(--radius); font-size: 1rem;">{{ session('password_value') }}</code>
+                        <button type="button" onclick="var btn=this; navigator.clipboard.writeText(document.getElementById('manager-password-value').textContent); btn.textContent='Copied!'; setTimeout(function(){ btn.textContent='Copy'; }, 1500);" class="btn-primary" style="cursor: pointer;">Copy</button>
+                    </div>
+                </div>
+            </div>
+        @endif
         <form method="POST" action="{{ route('tenant.managers.store', $tenant->slug) }}" style="max-width: 400px;">
             @csrf
             <div class="field" style="margin-bottom: 1rem;">
@@ -58,6 +70,7 @@
                         <tr style="border-bottom: 1px solid var(--border); text-align: left;">
                             <th style="padding: 0.5rem 0;">Name</th>
                             <th style="padding: 0.5rem 0;">Email</th>
+                            <th style="padding: 0.5rem 0;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -65,6 +78,13 @@
                             <tr style="border-bottom: 1px solid var(--border);">
                                 <td style="padding: 0.5rem 0;">{{ $m->name }}</td>
                                 <td style="padding: 0.5rem 0;">{{ $m->email }}</td>
+                                <td style="padding: 0.5rem 0;">
+                                    <a href="{{ route('tenant.managers.edit', [$tenant->slug, $m]) }}" style="font-size: 0.875rem; margin-right: 0.5rem;">Edit</a>
+                                    <form method="POST" action="{{ route('tenant.managers.reset-password', [$tenant->slug, $m]) }}" style="display: inline;" onsubmit="return confirm('Generate a new password? Current password will stop working. You will see the new password once.');">
+                                        @csrf
+                                        <button type="submit" style="padding: 0; font-size: 0.875rem; color: var(--text-secondary); background: none; border: none; cursor: pointer; text-decoration: underline;">Reset password</button>
+                                    </form>
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

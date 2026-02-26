@@ -823,6 +823,82 @@ class TenantController extends Controller
         return redirect()->route('tenant.managers.index', $slug)->with('success', 'Manager created. They can log in with the given email and password.');
     }
 
+    public function managerEdit(string $slug, User $manager): View|RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::with('plan')->where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
+            abort(403, 'Only Builder Admin or Super Admin can edit managers.');
+        }
+        if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        if ((int) $manager->builder_firm_id !== (int) $builder->id || $manager->role !== User::ROLE_MANAGER) {
+            abort(404, 'Manager not found for this tenant.');
+        }
+        return view('dashboard.manager_edit', [
+            'user' => $user,
+            'tenant' => $builder,
+            'manager' => $manager,
+        ]);
+    }
+
+    public function managerUpdate(Request $request, string $slug, User $manager): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
+            abort(403, 'Only Builder Admin or Super Admin can edit managers.');
+        }
+        if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        if ((int) $manager->builder_firm_id !== (int) $builder->id || $manager->role !== User::ROLE_MANAGER) {
+            abort(404, 'Manager not found for this tenant.');
+        }
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $manager->id,
+        ]);
+        $manager->update([
+            'name' => $validated['name'],
+            'email' => $validated['email'],
+        ]);
+        return redirect()->route('tenant.managers.index', $slug)->with('success', 'Manager updated.');
+    }
+
+    public function resetManagerPassword(string $slug, User $manager): RedirectResponse
+    {
+        if (! session('api_token') || ! session('user')) {
+            return redirect()->route('login');
+        }
+        $builder = BuilderFirm::where('slug', $slug)->firstOrFail();
+        $user = session('user');
+        if (! $user->isSuperAdmin() && ! $user->isBuilderAdmin()) {
+            abort(403, 'Only Builder Admin or Super Admin can reset manager password.');
+        }
+        if ((int) $user->builder_firm_id !== (int) $builder->id && ! $user->isSuperAdmin()) {
+            abort(403);
+        }
+        if ((int) $manager->builder_firm_id !== (int) $builder->id || $manager->role !== User::ROLE_MANAGER) {
+            abort(404, 'Manager not found for this tenant.');
+        }
+        $newPassword = Str::random(12);
+        $manager->update(['password' => Hash::make($newPassword)]);
+        return redirect()->route('tenant.managers.index', $slug)
+            ->with('show_manager_password', true)
+            ->with('manager_name', $manager->name)
+            ->with('manager_email', $manager->email)
+            ->with('password_value', $newPassword)
+            ->with('success', 'Password reset. Copy it now — it won\'t be shown again.');
+    }
+
     public function cpApplicationAssignManager(Request $request, string $slug, CpApplication $cpApplication): RedirectResponse
     {
         if (! session('api_token') || ! session('user')) {

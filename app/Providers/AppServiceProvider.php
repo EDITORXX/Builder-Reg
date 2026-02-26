@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Models\BuilderFirm;
 use App\Models\LeadLock;
+use App\Models\User;
 use App\View\Composers\NavComposer;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
@@ -19,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Route::bind('lock', fn ($value) => LeadLock::findOrFail($value));
+        Route::bind('manager', fn ($value) => User::findOrFail($value));
 
         View::composer('layouts.app', function ($view) {
             $user = session('user');

@@ -110,6 +110,9 @@ Route::middleware('auth_web')->group(function () {
     Route::post('/t/{slug}/cp-applications/{cpApplication}/assign-manager', [TenantController::class, 'cpApplicationAssignManager'])->name('tenant.cp-applications.assign-manager');
     Route::get('/t/{slug}/managers', [TenantController::class, 'showSection'])->defaults('section', 'managers')->name('tenant.managers.index');
     Route::post('/t/{slug}/managers', [TenantController::class, 'managerStore'])->name('tenant.managers.store');
+    Route::get('/t/{slug}/managers/{manager}/edit', [TenantController::class, 'managerEdit'])->name('tenant.managers.edit');
+    Route::put('/t/{slug}/managers/{manager}', [TenantController::class, 'managerUpdate'])->name('tenant.managers.update');
+    Route::post('/t/{slug}/managers/{manager}/reset-password', [TenantController::class, 'resetManagerPassword'])->name('tenant.managers.reset-password');
     Route::get('/t/{slug}/forms', [TenantController::class, 'showSection'])->defaults('section', 'forms')->name('tenant.forms.index');
     Route::get('/t/{slug}/forms/create', [FormController::class, 'create'])->name('tenant.forms.create');
     Route::post('/t/{slug}/forms', [FormController::class, 'store'])->name('tenant.forms.store');
