@@ -23,12 +23,7 @@
         <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}" id="sidebar">
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
-                    @php
-                        $logo_src = (strpos($tenant_logo_url, 'http://') === 0 || strpos($tenant_logo_url, 'https://') === 0)
-                            ? $tenant_logo_url
-                            : asset('storage/' . ltrim($tenant_logo_url, '/'));
-                    @endphp
-                    <img src="{{ $logo_src }}" alt="{{ optional($tenant)->name ?? 'Logo' }}" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
+                    <img src="{{ (strpos($tenant_logo_url, 'http') === 0) ? $tenant_logo_url : asset('storage/' . ltrim($tenant_logo_url, '/')) }}" alt="{{ optional($tenant)->name ?? 'Logo' }}" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
                 @else
                     <span class="sidebar-brand-icon">BP</span>
                 @endif
