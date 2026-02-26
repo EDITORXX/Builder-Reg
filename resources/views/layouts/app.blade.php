@@ -24,7 +24,7 @@
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
                     @php
-                        $logo_src = (str_starts_with($tenant_logo_url, 'http://') || str_starts_with($tenant_logo_url, 'https://'))
+                        $logo_src = (strpos($tenant_logo_url, 'http://') === 0 || strpos($tenant_logo_url, 'https://') === 0)
                             ? $tenant_logo_url
                             : asset('storage/' . ltrim($tenant_logo_url, '/'));
                     @endphp
