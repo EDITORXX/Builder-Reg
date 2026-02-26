@@ -15,6 +15,12 @@
         .btn-primary:hover { filter: brightness(0.9); }
     </style>
     @endif
+    <style>
+        /* Bottom nav only on mobile; hide on desktop to avoid duplicate/weird nav */
+        @media (min-width: 768px) {
+            .bottom-nav { display: none !important; }
+        }
+    </style>
 </head>
 <body class="app-body" id="app-body">
     <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
@@ -23,7 +29,10 @@
         <aside class="sidebar {{ $navIconOnly ? 'sidebar--icon-only' : '' }}" id="sidebar">
             <div class="sidebar-brand">
                 @if(!empty($tenant_logo_url))
-                    <img src="{{ (strpos($tenant_logo_url, 'http') === 0) ? $tenant_logo_url : asset('storage/' . ltrim($tenant_logo_url, '/')) }}" alt="{{ optional($tenant)->name ?? 'Logo' }}" class="sidebar-brand-icon" style="width: 40px; height: 40px; object-fit: contain; border-radius: var(--radius);">
+                    <div class="sidebar-brand-logo" style="width: 40px; height: 40px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border-radius: var(--radius); background: var(--tenant-primary, #0f766e); overflow: hidden;">
+                        <img src="{{ (strpos($tenant_logo_url, 'http') === 0) ? $tenant_logo_url : asset('storage/' . ltrim($tenant_logo_url, '/')) }}" alt="{{ optional($tenant)->name ?? 'Logo' }}" class="sidebar-brand-icon" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.style.display='none';var s=this.nextElementSibling;if(s)s.style.display='flex';">
+                        <span class="sidebar-brand-icon" style="display: none; width: 100%; height: 100%; align-items: center; justify-content: center; font-size: 1rem; font-weight: 700; color: #fff;">BP</span>
+                    </div>
                 @else
                     <span class="sidebar-brand-icon">BP</span>
                 @endif
