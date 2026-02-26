@@ -283,7 +283,12 @@ class TenantController extends Controller
             }
         }
         if ($section === 'managers') {
-            $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->orderBy('name')->get();
+            try {
+                $data['managers'] = User::where('builder_firm_id', $builder->id)->where('role', User::ROLE_MANAGER)->orderBy('name')->get();
+            } catch (\Throwable $e) {
+                Log::warning('TenantController managers section failed: '.$e->getMessage(), ['slug' => $slug, 'exception' => $e]);
+                $data['managers'] = collect();
+            }
         }
         if ($section === 'forms') {
             $data['forms'] = $builder->forms()->with('formFields')->orderBy('type')->orderBy('name')->get();

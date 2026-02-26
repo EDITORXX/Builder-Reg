@@ -4,6 +4,7 @@
         <p class="card-subtitle" style="margin: 0; font-size: 0.875rem; color: var(--text-secondary);">Managers can view leads, CPs, locks, visits, reports and send OTP for visits. Create a new manager for this builder.</p>
     </div>
     <div class="card-body">
+        @php $managers = $managers ?? collect(); @endphp
         @if(session('success'))
             <p class="msg-success">{{ session('success') }}</p>
         @endif
