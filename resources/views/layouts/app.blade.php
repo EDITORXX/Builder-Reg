@@ -40,8 +40,9 @@
             </div>
             @if(isset($navUser) && $navUser)
             <div class="sidebar-user" style="padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.875rem; display: flex; align-items: center; gap: 0.5rem;">
-                @if($navUser->avatar_url ?? null)
-                    <img src="{{ $navUser->avatar_url }}" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                @if(!empty($navUser->avatar))
+                    <img src="{{ $navUser->avatar_url }}" alt="" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; flex-shrink: 0;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); color: #fff; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; flex-shrink: 0;">{{ strtoupper(substr($navUser->name ?? 'U', 0, 1)) }}</div>
                 @else
                     <div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(255,255,255,0.25); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; font-weight: 600; flex-shrink: 0;">{{ strtoupper(substr($navUser->name ?? 'U', 0, 1)) }}</div>
                 @endif

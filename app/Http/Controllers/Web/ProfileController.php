@@ -26,6 +26,9 @@ class ProfileController extends Controller
         if (! $user->relationLoaded('builderFirm')) {
             $user->load('builderFirm');
         }
+        $user->refresh();
+        $user->load('channelPartner', 'builderFirm');
+        session(['user' => $user]);
 
         return view('profile.show', [
             'user' => $user,
@@ -97,6 +100,7 @@ class ProfileController extends Controller
         }
 
         $user->update(['avatar' => $path]);
+        $user->refresh();
         session(['user' => $user->load('builderFirm', 'channelPartner')]);
 
         return redirect()->route('profile.show')->with('success', 'Profile picture updated.');
